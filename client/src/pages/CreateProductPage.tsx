@@ -1,34 +1,36 @@
-import { useState } from 'react';
+
 import { useLocation } from 'wouter';
 import ProductForm from '@/components/forms/ProductForm';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function CreateProductPage() {
-  const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = async (data: any) => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+  const createProductMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/products', { method: 'POST', data }),
+    onSuccess: (newProduct) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       toast({
         title: "Product created successfully!",
-        description: `${data.name} has been added to your inventory.`,
+        description: `${newProduct.name} has been added to your inventory.`,
       });
-      
       setLocation('/products');
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: "Error creating product",
         description: "Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = async (data: any) => {
+    createProductMutation.mutate(data);
   };
 
   const handleCancel = () => {
@@ -46,7 +48,7 @@ export default function CreateProductPage() {
       <ProductForm 
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        isLoading={isLoading}
+        isLoading={createProductMutation.isPending}
       />
     </div>
   );

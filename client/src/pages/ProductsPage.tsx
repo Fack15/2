@@ -3,37 +3,55 @@ import { Plus, Upload, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ProductsTable from '@/components/tables/ProductsTable';
-import { mockProducts } from '@/lib/mock-data';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { Product } from '@shared/schema';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [products] = useState<Product[]>(mockProducts);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const filteredProducts = products.filter(product =>
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+    queryFn: () => apiRequest('/api/products'),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/products/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Product deleted",
+        description: "Product has been successfully deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEdit = (product: Product) => {
-    // Navigate to edit page (would be implemented with product ID)
-    toast({
-      title: "Edit product",
-      description: `Editing ${product.name}`,
-    });
+    setLocation(`/products/edit/${product.id}`);
   };
 
   const handleDelete = (product: Product) => {
-    toast({
-      title: "Delete product",
-      description: `${product.name} would be deleted`,
-      variant: "destructive",
-    });
+    if (confirm(`Are you sure you want to delete ${product.name}?`)) {
+      deleteProductMutation.mutate(product.id);
+    }
   };
 
   const handleDuplicate = (product: Product) => {

@@ -1,27 +1,44 @@
-import { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Copy, Edit, Trash2, FileImage, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLocation, useRoute } from 'wouter';
-import { mockProducts } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { Product } from '@shared/schema';
 
 export default function ProductDetailPage() {
   const [, setLocation] = useLocation();
   const [match, params] = useRoute('/products/:id');
-  const [product, setProduct] = useState<Product | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (match && params?.id) {
-      const productId = parseInt(params.id);
-      const foundProduct = mockProducts.find(p => p.id === productId);
-      setProduct(foundProduct || null);
-    }
-  }, [match, params]);
+  const { data: product, isLoading } = useQuery<Product>({
+    queryKey: ['/api/products', params?.id],
+    queryFn: () => apiRequest(`/api/products/${params?.id}`),
+    enabled: !!params?.id,
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/products/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Product deleted",
+        description: "Product has been successfully deleted",
+      });
+      setLocation('/products');
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (!product) {
     return (
