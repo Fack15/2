@@ -10,47 +10,56 @@ import { useAuth } from '@/lib/auth';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 
-const loginSchema = z.object({
+const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       email: 'a90685766@gmail.com',
-      password: 'password123',
+      password: '',
+      confirmPassword: '',
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
+      // Simulate registration process - in a real app this would create a new user
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Auto-login after successful registration
       const result = await login(data.email, data.password);
       if (result.success) {
         toast({
-          title: "Login successful!",
-          description: "Welcome back to the dashboard.",
+          title: "Registration successful!",
+          description: "Your account has been created and you're now logged in.",
         });
         setLocation('/products');
       } else {
         toast({
-          title: "Login failed",
-          description: result.error || "Invalid credentials",
+          title: "Registration failed",
+          description: "There was an issue creating your account.",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Login failed",
+        title: "Registration failed",
         description: "An unexpected error occurred.",
         variant: "destructive",
       });
@@ -63,8 +72,8 @@ export default function LoginPage() {
     <div className="max-w-md mx-auto mt-20 px-4">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-gray-900">Login</CardTitle>
-          <p className="text-gray-600">Sign in to your account</p>
+          <CardTitle className="text-2xl font-semibold text-gray-900">Register</CardTitle>
+          <p className="text-gray-600">Create a new account</p>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -97,18 +106,32 @@ export default function LoginPage() {
                 )}
               />
               
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <Button 
                 type="submit" 
                 className="w-full bg-gray-900 hover:bg-gray-800 text-white"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Login'}
+                {isLoading ? 'Creating account...' : 'Register'}
               </Button>
             </form>
           </Form>
           
           <p className="text-center text-sm text-gray-600 mt-6">
-            Don't have an account? <button onClick={() => setLocation('/register')} className="text-primary hover:underline">Register</button>
+            Already have an account? <button onClick={() => setLocation('/login')} className="text-primary hover:underline">Login</button>
           </p>
         </CardContent>
       </Card>

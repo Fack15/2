@@ -7,6 +7,7 @@ import Navigation from "@/components/layout/Navigation";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
 import ProductsPage from "@/pages/ProductsPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import CreateProductPage from "@/pages/CreateProductPage";
@@ -19,6 +20,7 @@ function Router() {
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
       <Route path="/products">
         <ProtectedRoute>
           <ProductsPage />
