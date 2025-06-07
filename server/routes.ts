@@ -423,7 +423,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/export", async (req, res) => {
     try {
+      console.log("Starting products export...");
       const products = await storage.getProducts();
+      console.log(`Found ${products.length} products to export`);
       
       // Transform products for Excel export
       const exportData = products.map(product => ({
@@ -455,15 +457,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Redirect Link': product.redirectLink
       }));
 
+      console.log("Creating Excel worksheet...");
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
 
+      console.log("Generating Excel buffer...");
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      console.log(`Buffer size: ${buffer.length} bytes`);
 
       res.setHeader('Content-Disposition', 'attachment; filename=products.xlsx');
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.send(buffer);
+      console.log("Export completed successfully");
     } catch (error) {
       console.error("Export error:", error);
       res.status(500).json({ error: "Failed to export products" });
@@ -533,7 +539,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/ingredients/export", async (req, res) => {
     try {
+      console.log("Starting ingredients export...");
       const ingredients = await storage.getIngredients();
+      console.log(`Found ${ingredients.length} ingredients to export`);
       
       // Transform ingredients for Excel export
       const exportData = ingredients.map(ingredient => ({
@@ -544,15 +552,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Details: ingredient.details
       }));
 
+      console.log("Creating Excel worksheet...");
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Ingredients');
 
+      console.log("Generating Excel buffer...");
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      console.log(`Buffer size: ${buffer.length} bytes`);
 
       res.setHeader('Content-Disposition', 'attachment; filename=ingredients.xlsx');
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.send(buffer);
+      console.log("Export completed successfully");
     } catch (error) {
       console.error("Export error:", error);
       res.status(500).json({ error: "Failed to export ingredients" });
