@@ -49,15 +49,18 @@ const upload = multer({
 const uploadExcel = multer({
   storage: multer.memoryStorage(),
   fileFilter: function (req, file, cb) {
+    console.log('Uploaded file mimetype:', file.mimetype);
     const allowedMimes = [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel',
-      'text/csv'
+      'text/csv',
+      'text/plain',
+      'application/csv'
     ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Not an Excel file! Please upload only Excel or CSV files.'));
+      cb(new Error(`Not an Excel file! Received: ${file.mimetype}. Please upload only Excel or CSV files.`));
     }
   },
   limits: {
@@ -163,6 +166,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(products);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  // Export route must come before /:id route
+  app.get("/api/products/export", async (req, res) => {
+    try {
+      console.log("Starting products export...");
+      const products = await storage.getProducts();
+      console.log(`Found ${products.length} products to export`);
+      
+      // Transform products for Excel export - specific fields only
+      const exportData = products.map(product => ({
+        Name: product.name,
+        'Net Volume': product.netVolume,
+        Vintage: product.vintage,
+        Type: product.wineType,
+        'Sugar Content': product.sugarContent,
+        Appellation: product.appellation,
+        SKU: product.sku
+      }));
+
+      console.log("Creating Excel worksheet...");
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+
+      console.log("Generating Excel buffer...");
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      console.log(`Buffer size: ${buffer.length} bytes`);
+
+      res.setHeader('Content-Disposition', 'attachment; filename=products.xlsx');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.send(buffer);
+      console.log("Export completed successfully");
+    } catch (error: any) {
+      console.error("Export error details:", error);
+      res.status(500).json({ error: "Failed to export products", details: error?.message || String(error) });
     }
   });
 
@@ -402,43 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/export", async (req, res) => {
-    try {
-      console.log("Starting products export...");
-      const products = await storage.getProducts();
-      console.log(`Found ${products.length} products to export`);
-      console.log("Sample product:", products[0]);
-      
-      // Transform products for Excel export - specific fields only
-      const exportData = products.map(product => ({
-        Name: product.name,
-        'Net Volume': product.netVolume,
-        Vintage: product.vintage,
-        Type: product.wineType,
-        'Sugar Content': product.sugarContent,
-        Appellation: product.appellation,
-        SKU: product.sku
-      }));
 
-      console.log("Creating Excel worksheet...");
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
-
-      console.log("Generating Excel buffer...");
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-      console.log(`Buffer size: ${buffer.length} bytes`);
-
-      res.setHeader('Content-Disposition', 'attachment; filename=products.xlsx');
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.send(buffer);
-      console.log("Export completed successfully");
-    } catch (error: any) {
-      console.error("Export error details:", error);
-      console.error("Error stack:", error?.stack);
-      res.status(500).json({ error: "Failed to export products", details: error?.message || String(error) });
-    }
-  });
 
   // Excel Import/Export routes for Ingredients
   app.post("/api/ingredients/import", uploadExcel.single('file'), async (req, res) => {
