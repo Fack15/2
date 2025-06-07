@@ -533,9 +533,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.send(buffer);
       console.log("Export completed successfully");
-    } catch (error) {
-      console.error("Export error:", error);
-      res.status(500).json({ error: "Failed to export ingredients" });
+    } catch (error: any) {
+      console.error("Export error details:", error);
+      res.status(500).json({ error: "Failed to export ingredients", details: error?.message || String(error) });
     }
   });
 
