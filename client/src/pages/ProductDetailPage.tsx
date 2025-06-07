@@ -169,10 +169,10 @@ export default function ProductDetailPage() {
             <Eye className="w-4 h-4 mr-2" />
             Preview
           </Button>
-          <Button onClick={handleEditProduct} variant="outline">
+          {/* <Button onClick={handleEditProduct} variant="outline">
             <Edit className="w-4 h-4 mr-2" />
             Edit
-          </Button>
+          </Button> */}
           <Button onClick={handleDeleteProduct} variant="destructive">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
