@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, Edit, MoreVertical, Copy, Trash2, FileText } from 'lucide-react';
+import { Eye, Edit, MoreVertical, Copy, Trash2, FileText, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -11,9 +11,10 @@ interface ProductsTableProps {
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onDuplicate?: (product: Product) => void;
+  onPreview?: (product: Product) => void;
 }
 
-export default function ProductsTable({ products, onEdit, onDelete, onDuplicate }: ProductsTableProps) {
+export default function ProductsTable({ products, onEdit, onDelete, onDuplicate, onPreview }: ProductsTableProps) {
   const [, setLocation] = useLocation();
 
   const handleViewDetails = (productId: number) => {
@@ -43,7 +44,7 @@ export default function ProductsTable({ products, onEdit, onDelete, onDuplicate 
               </TableCell>
               <TableCell className="px-6 py-4 text-gray-600">{product.netVolume || '-'}</TableCell>
               <TableCell className="px-6 py-4 text-gray-600">{product.vintage || '-'}</TableCell>
-              <TableCell className="px-6 py-4 text-gray-600">{product.type || '-'}</TableCell>
+              <TableCell className="px-6 py-4 text-gray-600">{product.wineType || '-'}</TableCell>
               <TableCell className="px-6 py-4 text-gray-600">{product.sugarContent || '-'}</TableCell>
               <TableCell className="px-6 py-4 text-gray-600">{product.appellation || '-'}</TableCell>
               <TableCell className="px-6 py-4 text-gray-600">{product.sku || '-'}</TableCell>
@@ -84,16 +85,17 @@ export default function ProductsTable({ products, onEdit, onDelete, onDuplicate 
                         <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onDelete?.(product)} className="text-red-600 focus:text-red-600">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onDuplicate?.(product)}>
                         <Copy className="w-4 h-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => onDelete?.(product)}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
+                      <DropdownMenuItem onClick={() => onPreview?.(product)}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
