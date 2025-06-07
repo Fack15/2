@@ -327,6 +327,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export route must come before the parameterized route
+  app.get("/api/ingredients/export", async (req, res) => {
+    try {
+      console.log("Starting ingredients export...");
+      const ingredients = await storage.getIngredients();
+      console.log(`Found ${ingredients.length} ingredients to export`);
+      
+      // Transform ingredients for Excel export
+      const exportData = ingredients.map(ingredient => ({
+        Name: ingredient.name,
+        Category: ingredient.category,
+        'E Number': ingredient.eNumber,
+        Allergens: Array.isArray(ingredient.allergens) ? ingredient.allergens.join(', ') : ingredient.allergens,
+        Details: ingredient.details
+      }));
+
+      console.log("Creating Excel worksheet...");
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Ingredients');
+
+      console.log("Generating Excel buffer...");
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      console.log(`Buffer size: ${buffer.length} bytes`);
+
+      res.setHeader('Content-Disposition', 'attachment; filename=ingredients.xlsx');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.send(buffer);
+      console.log("Export completed successfully");
+    } catch (error: any) {
+      console.error("Export error details:", error);
+      console.error("Error stack:", error?.stack);
+      res.status(500).json({ error: "Failed to export ingredients", details: error?.message || String(error) });
+    }
+  });
+
   app.get("/api/ingredients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -502,40 +538,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Import error:", error);
       res.status(500).json({ error: "Failed to import ingredients" });
-    }
-  });
-
-  app.get("/api/ingredients/export", async (req, res) => {
-    try {
-      console.log("Starting ingredients export...");
-      const ingredients = await storage.getIngredients();
-      console.log(`Found ${ingredients.length} ingredients to export`);
-      
-      // Transform ingredients for Excel export
-      const exportData = ingredients.map(ingredient => ({
-        Name: ingredient.name,
-        Category: ingredient.category,
-        'E Number': ingredient.eNumber,
-        Allergens: Array.isArray(ingredient.allergens) ? ingredient.allergens.join(', ') : ingredient.allergens,
-        Details: ingredient.details
-      }));
-
-      console.log("Creating Excel worksheet...");
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Ingredients');
-
-      console.log("Generating Excel buffer...");
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-      console.log(`Buffer size: ${buffer.length} bytes`);
-
-      res.setHeader('Content-Disposition', 'attachment; filename=ingredients.xlsx');
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.send(buffer);
-      console.log("Export completed successfully");
-    } catch (error: any) {
-      console.error("Export error details:", error);
-      res.status(500).json({ error: "Failed to export ingredients", details: error?.message || String(error) });
     }
   });
 
