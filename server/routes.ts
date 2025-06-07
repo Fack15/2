@@ -341,6 +341,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Excel Import/Export routes for Products
+  app.post("/api/products/import", uploadExcel.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      const importedProducts = [];
+      const errors = [];
+
+      for (let i = 0; i < data.length; i++) {
+        try {
+          const row = data[i] as any;
+          
+          // Map Excel columns to product fields
+          const productData = {
+            name: row.name || row.Name || row.NAME,
+            brand: row.brand || row.Brand || row.BRAND,
+            netVolume: row.netVolume || row['Net Volume'] || row.NET_VOLUME || row.netvolume,
+            vintage: row.vintage || row.Vintage || row.VINTAGE,
+            wineType: row.wineType || row['Wine Type'] || row.WINE_TYPE || row.winetype,
+            sugarContent: row.sugarContent || row['Sugar Content'] || row.SUGAR_CONTENT || row.sugarcontent,
+            appellation: row.appellation || row.Appellation || row.APPELLATION,
+            alcoholContent: row.alcoholContent || row['Alcohol Content'] || row.ALCOHOL_CONTENT || row.alcoholcontent,
+            packagingGases: row.packagingGases || row['Packaging Gases'] || row.PACKAGING_GASES || row.packaginggases,
+            portionSize: row.portionSize || row['Portion Size'] || row.PORTION_SIZE || row.portionsize,
+            kcal: row.kcal || row.Kcal || row.KCAL,
+            kj: row.kj || row.KJ || row.kJ,
+            fat: row.fat || row.Fat || row.FAT,
+            carbohydrates: row.carbohydrates || row.Carbohydrates || row.CARBOHYDRATES,
+            organic: row.organic || row.Organic || row.ORGANIC || false,
+            vegetarian: row.vegetarian || row.Vegetarian || row.VEGETARIAN || false,
+            vegan: row.vegan || row.Vegan || row.VEGAN || false,
+            operatorType: row.operatorType || row['Operator Type'] || row.OPERATOR_TYPE || row.operatortype,
+            operatorName: row.operatorName || row['Operator Name'] || row.OPERATOR_NAME || row.operatorname,
+            operatorAddress: row.operatorAddress || row['Operator Address'] || row.OPERATOR_ADDRESS || row.operatoraddress,
+            operatorInfo: row.operatorInfo || row['Operator Info'] || row.OPERATOR_INFO || row.operatorinfo,
+            countryOfOrigin: row.countryOfOrigin || row['Country of Origin'] || row.COUNTRY_OF_ORIGIN || row.countryoforigin,
+            sku: row.sku || row.SKU,
+            ean: row.ean || row.EAN,
+            externalLink: row.externalLink || row['External Link'] || row.EXTERNAL_LINK || row.externallink,
+            redirectLink: row.redirectLink || row['Redirect Link'] || row.REDIRECT_LINK || row.redirectlink
+          };
+
+          // Validate required fields
+          if (!productData.name) {
+            errors.push(`Row ${i + 2}: Name is required`);
+            continue;
+          }
+
+          const result = insertProductSchema.safeParse(productData);
+          if (!result.success) {
+            errors.push(`Row ${i + 2}: ${result.error.errors.map(e => e.message).join(', ')}`);
+            continue;
+          }
+
+          const product = await storage.createProduct(result.data);
+          importedProducts.push(product);
+        } catch (error) {
+          errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        imported: importedProducts.length,
+        errors: errors,
+        products: importedProducts
+      });
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ error: "Failed to import products" });
+    }
+  });
+
+  app.get("/api/products/export", async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      
+      // Transform products for Excel export
+      const exportData = products.map(product => ({
+        Name: product.name,
+        Brand: product.brand,
+        'Net Volume': product.netVolume,
+        Vintage: product.vintage,
+        'Wine Type': product.wineType,
+        'Sugar Content': product.sugarContent,
+        Appellation: product.appellation,
+        'Alcohol Content': product.alcoholContent,
+        'Packaging Gases': product.packagingGases,
+        'Portion Size': product.portionSize,
+        'Kcal': product.kcal,
+        'KJ': product.kj,
+        Fat: product.fat,
+        Carbohydrates: product.carbohydrates,
+        Organic: product.organic,
+        Vegetarian: product.vegetarian,
+        Vegan: product.vegan,
+        'Operator Type': product.operatorType,
+        'Operator Name': product.operatorName,
+        'Operator Address': product.operatorAddress,
+        'Operator Info': product.operatorInfo,
+        'Country of Origin': product.countryOfOrigin,
+        SKU: product.sku,
+        EAN: product.ean,
+        'External Link': product.externalLink,
+        'Redirect Link': product.redirectLink
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      res.setHeader('Content-Disposition', 'attachment; filename=products.xlsx');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ error: "Failed to export products" });
+    }
+  });
+
+  // Excel Import/Export routes for Ingredients
+  app.post("/api/ingredients/import", uploadExcel.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      const importedIngredients = [];
+      const errors = [];
+
+      for (let i = 0; i < data.length; i++) {
+        try {
+          const row = data[i] as any;
+          
+          // Map Excel columns to ingredient fields
+          const ingredientData = {
+            name: row.name || row.Name || row.NAME,
+            category: row.category || row.Category || row.CATEGORY,
+            eNumber: row.eNumber || row['E Number'] || row.E_NUMBER || row.enumber,
+            allergens: typeof (row.allergens || row.Allergens || row.ALLERGENS) === 'string' 
+              ? (row.allergens || row.Allergens || row.ALLERGENS).split(',').map((a: string) => a.trim())
+              : (row.allergens || row.Allergens || row.ALLERGENS || []),
+            details: row.details || row.Details || row.DETAILS || null
+          };
+
+          // Validate required fields
+          if (!ingredientData.name) {
+            errors.push(`Row ${i + 2}: Name is required`);
+            continue;
+          }
+
+          const result = insertIngredientSchema.safeParse(ingredientData);
+          if (!result.success) {
+            errors.push(`Row ${i + 2}: ${result.error.errors.map(e => e.message).join(', ')}`);
+            continue;
+          }
+
+          const ingredient = await storage.createIngredient(result.data);
+          importedIngredients.push(ingredient);
+        } catch (error) {
+          errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        imported: importedIngredients.length,
+        errors: errors,
+        ingredients: importedIngredients
+      });
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ error: "Failed to import ingredients" });
+    }
+  });
+
+  app.get("/api/ingredients/export", async (req, res) => {
+    try {
+      const ingredients = await storage.getIngredients();
+      
+      // Transform ingredients for Excel export
+      const exportData = ingredients.map(ingredient => ({
+        Name: ingredient.name,
+        Category: ingredient.category,
+        'E Number': ingredient.eNumber,
+        Allergens: Array.isArray(ingredient.allergens) ? ingredient.allergens.join(', ') : ingredient.allergens,
+        Details: ingredient.details
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Ingredients');
+
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      res.setHeader('Content-Disposition', 'attachment; filename=ingredients.xlsx');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ error: "Failed to export ingredients" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
