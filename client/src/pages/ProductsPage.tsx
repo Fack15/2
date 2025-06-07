@@ -3,6 +3,8 @@ import { Plus, Upload, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ProductsTable from '@/components/tables/ProductsTable';
+import ProductPreviewModal from '@/components/modals/ProductPreviewModal';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

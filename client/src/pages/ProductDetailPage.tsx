@@ -1,17 +1,24 @@
-import { ArrowLeft, Download, Copy, Edit, Trash2, FileImage, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Download, Copy, Edit, Trash2, Eye, QrCode, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLocation, useRoute } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import ProductPreviewModal from '@/components/modals/ProductPreviewModal';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import type { Product } from '@shared/schema';
 
 export default function ProductDetailPage() {
   const [, setLocation] = useLocation();
   const [match, params] = useRoute('/products/:id');
+  const [showPreview, setShowPreview] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -39,6 +46,82 @@ export default function ProductDetailPage() {
       });
     },
   });
+
+  const duplicateProductMutation = useMutation({
+    mutationFn: (productData: any) => 
+      apiRequest('/api/products', { 
+        method: 'POST',
+        data: { ...productData, name: `${productData.name} (Copy)` }
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Product duplicated",
+        description: "Product has been successfully duplicated",
+      });
+      setLocation('/products');
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditProduct = () => {
+    setLocation(`/products/edit/${params?.id}`);
+  };
+
+  const handleDuplicateProduct = () => {
+    if (product) {
+      const { id, createdAt, updatedAt, ...productData } = product;
+      duplicateProductMutation.mutate(productData);
+    }
+  };
+
+  const handleDeleteProduct = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (product) {
+      deleteProductMutation.mutate(product.id);
+      setShowDeleteModal(false);
+    }
+  };
+
+  const generateQRCode = () => {
+    if (product?.externalLink) {
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(product.externalLink)}`;
+      const link = document.createElement('a');
+      link.href = qrCodeUrl;
+      link.download = `${product.name}-qr-code.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "QR Code Downloaded",
+        description: "QR code has been downloaded successfully",
+      });
+    } else {
+      toast({
+        title: "No External Link",
+        description: "Please add an external link to generate QR code",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Link copied",
+      description: "Link has been copied to clipboard",
+    });
+  };
 
   if (isLoading) {
     return (
@@ -68,75 +151,51 @@ export default function ProductDetailPage() {
     );
   }
 
-  const handleCopyLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-    toast({
-      title: "Link copied",
-      description: "Link has been copied to clipboard",
-    });
-  };
-
-  const handleEdit = () => {
-    toast({
-      title: "Edit product",
-      description: "Edit functionality would be implemented here",
-    });
-  };
-
-  const handleDelete = () => {
-    toast({
-      title: "Delete product",
-      description: "Delete functionality would be implemented here",
-      variant: "destructive",
-    });
-  };
-
-  const handleDuplicate = () => {
-    toast({
-      title: "Duplicate product",
-      description: "Product would be duplicated",
-    });
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back Button */}
-      <Button 
-        onClick={() => setLocation('/products')}
-        variant="ghost"
-        className="mb-6 text-gray-600 hover:text-primary"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to List
-      </Button>
-      
-      {/* Product Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-        <p className="text-gray-600">{product.brand}</p>
+      {/* Header with Action Buttons */}
+      <div className="flex items-center justify-between mb-8">
+        <Button 
+          onClick={() => setLocation('/products')}
+          variant="ghost"
+          className="text-gray-600 hover:text-primary"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Products
+        </Button>
+        
+        <div className="flex items-center space-x-2">
+          <Button onClick={() => setShowPreview(true)} variant="outline">
+            <Eye className="w-4 h-4 mr-2" />
+            Preview
+          </Button>
+          <Button onClick={handleEditProduct} variant="outline">
+            <Edit className="w-4 h-4 mr-2" />
+            Edit
+          </Button>
+          <Button onClick={handleDeleteProduct} variant="destructive">
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </Button>
+          <Button onClick={handleDuplicateProduct} variant="outline">
+            <Copy className="w-4 h-4 mr-2" />
+            Duplicate
+          </Button>
+        </div>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Product Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Product Image */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Image</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center">
-                <img 
-                  src="https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=800" 
-                  alt={`${product.name} wine bottle`} 
-                  className="w-full h-full object-cover rounded-lg" 
-                />
-              </div>
-              <p className="text-sm text-gray-500 mt-2">Image Dimensions: 154x44, 206x156, 206x256, 300x117, 1000x750, 2000x1694</p>
-            </CardContent>
-          </Card>
-          
-          {/* Product Information */}
+
+      <Tabs defaultValue="details" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="image">Product Image</TabsTrigger>
+          <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
+          <TabsTrigger value="certifications">Certifications</TabsTrigger>
+          <TabsTrigger value="fbo">FBO Details</TabsTrigger>
+          <TabsTrigger value="digital">Digital Assets</TabsTrigger>
+        </TabsList>
+
+        {/* Product Details Tab */}
+        <TabsContent value="details" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Product Information</CardTitle>
@@ -144,99 +203,126 @@ export default function ProductDetailPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name:</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                   <p className="text-gray-900">{product.name}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand:</label>
-                  <p className="text-gray-900">{product.brand || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                  <p className="text-gray-900">{product.brand || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Net Volume:</label>
-                  <p className="text-gray-900">{product.netVolume || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Net Volume</label>
+                  <p className="text-gray-900">{product.netVolume || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vintage:</label>
-                  <p className="text-gray-900">{product.vintage || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vintage</label>
+                  <p className="text-gray-900">{product.vintage || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type:</label>
-                  <p className="text-gray-900">{product.type || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Wine Type</label>
+                  <p className="text-gray-900">{product.wineType || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sugar Content:</label>
-                  <p className="text-gray-900">{product.sugarContent || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sugar Content</label>
+                  <p className="text-gray-900">{product.sugarContent || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Appellation:</label>
-                  <p className="text-gray-900">{product.appellation || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Appellation</label>
+                  <p className="text-gray-900">{product.appellation || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Alcohol Content:</label>
-                  <p className="text-gray-900">{product.alcoholContent || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Alcohol Content</label>
+                  <p className="text-gray-900">{product.alcoholContent || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country:</label>
-                  <p className="text-gray-900">{product.country || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country of Origin</label>
+                  <p className="text-gray-900">{product.countryOfOrigin || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU:</label>
-                  <p className="text-gray-900">{product.sku || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                  <p className="text-gray-900">{product.sku || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">EAN:</label>
-                  <p className="text-gray-900">{product.ean || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">EAN</label>
+                  <p className="text-gray-900">{product.ean || 'Not specified'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Packaging Gases</label>
+                  <p className="text-gray-900">{product.packagingGases || 'Not specified'}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Ingredients */}
+        </TabsContent>
+
+        {/* Product Image Tab */}
+        <TabsContent value="image" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Ingredients</CardTitle>
+              <CardTitle>Product Image</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 mb-4">{product.ingredients || 'No ingredients specified'}</p>
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Packaging Gases:</p>
-                <p className="text-gray-600">{product.packagingGases || 'None specified'}</p>
+              <div className="space-y-4">
+                <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500">Product Image Placeholder</span>
+                </div>
+                <div className="flex space-x-2">
+                  <Button variant="outline">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Image
+                  </Button>
+                  <Button variant="outline">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Change Image
+                  </Button>
+                  <Button variant="destructive">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Image
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Supported formats: JPG, PNG. Recommended dimensions: 1000x750px
+                </p>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Nutrition Information */}
+        </TabsContent>
+
+        {/* Nutrition Information Tab */}
+        <TabsContent value="nutrition" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Nutrition Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Portion Size:</label>
-                  <p className="text-gray-900">{product.portionSize || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Portion Size</label>
+                  <p className="text-gray-900">{product.portionSize || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">kcal:</label>
-                  <p className="text-gray-900">{product.kcal || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Energy (kcal)</label>
+                  <p className="text-gray-900">{product.kcal || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">kJ:</label>
-                  <p className="text-gray-900">{product.kj || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Energy (kJ)</label>
+                  <p className="text-gray-900">{product.kj || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fat:</label>
-                  <p className="text-gray-900">{product.fat || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fat</label>
+                  <p className="text-gray-900">{product.fat || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Carbohydrates (g):</label>
-                  <p className="text-gray-900">{product.carbohydrates || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Carbohydrates</label>
+                  <p className="text-gray-900">{product.carbohydrates || 'Not specified'}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Certifications */}
+        </TabsContent>
+
+        {/* Certifications Tab */}
+        <TabsContent value="certifications" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Certifications</CardTitle>
@@ -247,181 +333,153 @@ export default function ProductDetailPage() {
                 {product.vegetarian && <Badge variant="secondary" className="bg-green-100 text-green-800">Vegetarian</Badge>}
                 {product.vegan && <Badge variant="secondary" className="bg-green-100 text-green-800">Vegan</Badge>}
                 {!product.organic && !product.vegetarian && !product.vegan && (
-                  <span className="text-gray-500">No certifications</span>
+                  <span className="text-gray-500">No certifications specified</span>
                 )}
               </div>
             </CardContent>
           </Card>
-          
-          {/* Food Business Operator */}
+        </TabsContent>
+
+        {/* FBO Details Tab */}
+        <TabsContent value="fbo" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Food Business Operator</CardTitle>
+              <CardTitle>Food Business Operator Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type:</label>
-                  <p className="text-gray-900">{product.operatorType || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Operator Type</label>
+                  <p className="text-gray-900">{product.operatorType || 'Not specified'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name:</label>
-                  <p className="text-gray-900">{product.operatorName || '-'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Operator Name</label>
+                  <p className="text-gray-900">{product.operatorName || 'Not specified'}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address:</label>
-                  <p className="text-gray-900">{product.operatorAddress || '-'}</p>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <p className="text-gray-900">{product.operatorAddress || 'Not specified'}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Information:</label>
-                  <p className="text-gray-900">{product.operatorInfo || '-'}</p>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Information</label>
+                  <p className="text-gray-900">{product.operatorInfo || 'Not specified'}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
-        
-        {/* Right Column - Digital Assets and Actions */}
-        <div className="space-y-6">
-          {/* Digital Assets */}
+        </TabsContent>
+
+        {/* Digital Assets Tab */}
+        <TabsContent value="digital" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Digital Assets</CardTitle>
+              <CardTitle>Digital Assets (QR Code)</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* QR Code */}
-              <div className="text-center mb-6">
-                <img 
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://localhost:1245/1/1" 
-                  alt="QR Code for product information" 
-                  className="w-32 h-32 mx-auto border rounded-lg" 
-                />
-                <p className="text-sm text-gray-600 mt-2">QR Code</p>
-              </div>
-              
-              {/* Download Links */}
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download QR Code
-                </Button>
-                
+              <div className="space-y-6">
+                {/* QR Code Display */}
+                <div className="text-center">
+                  {product.externalLink ? (
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(product.externalLink)}`}
+                      alt="QR Code for product" 
+                      className="w-48 h-48 mx-auto border rounded-lg" 
+                    />
+                  ) : (
+                    <div className="w-48 h-48 mx-auto border rounded-lg bg-gray-100 flex items-center justify-center">
+                      <span className="text-gray-500">No QR Code Available</span>
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-600 mt-2">
+                    QR Code generated from External Link
+                  </p>
+                </div>
+
+                {/* Download QR Code */}
+                <div className="text-center">
+                  <Button onClick={generateQRCode} variant="outline" disabled={!product.externalLink}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download QR Code
+                  </Button>
+                </div>
+
+                {/* External Link */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Label Public Link:</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">External Link</label>
                   <div className="flex items-center space-x-2">
                     <Input 
-                      value="https://localhost:1245/1/1" 
+                      value={product.externalLink || 'No external link specified'} 
                       readOnly 
                       className="flex-1 text-sm bg-gray-50"
                     />
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleCopyLink("https://localhost:1245/1/1")}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
+                    {product.externalLink && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleCopyLink(product.externalLink!)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-                
+
+                {/* Redirect Link */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">External Short Link:</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Redirect Link</label>
                   <div className="flex items-center space-x-2">
                     <Input 
-                      value={product.externalShortLink || 'Not set'} 
+                      value={product.redirectLink || 'No redirect link specified'} 
                       readOnly 
                       className="flex-1 text-sm bg-gray-50"
                     />
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleCopyLink(product.externalShortLink || '')}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Redirect Link:</label>
-                  <div className="flex items-center space-x-2">
-                    <Input 
-                      value={product.redirectLink || 'Not set'} 
-                      readOnly 
-                      className="flex-1 text-sm bg-gray-50"
-                    />
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleCopyLink(product.redirectLink || '')}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
+                    {product.redirectLink && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleCopyLink(product.redirectLink!)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Audit Information */}
+
+          {/* Edit All Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Audit</CardTitle>
+              <CardTitle>Edit All Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="text-gray-600">Created on:</span>
-                  <p className="text-gray-900">{product.createdAt?.toLocaleString() || '-'}</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Created by:</span>
-                  <p className="text-gray-900">Admin</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Updated on:</span>
-                  <p className="text-gray-900">{product.updatedAt?.toLocaleString() || '-'}</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Updated by:</span>
-                  <p className="text-gray-900">Admin</p>
-                </div>
-              </div>
+              <p className="text-gray-600 mb-4">
+                Edit all product details including images, information, ingredients, nutrition, certifications, and FBO details.
+              </p>
+              <Button onClick={handleEditProduct} className="w-full">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit All Product Details
+              </Button>
             </CardContent>
           </Card>
-          
-          {/* Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white" onClick={handleEdit}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <FileImage className="w-4 h-4 mr-2" />
-                  Delete Image
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <FileImage className="w-4 h-4 mr-2" />
-                  Change Image
-                </Button>
-                <Button variant="outline" className="w-full" onClick={handleDuplicate}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Duplicate
-                </Button>
-                <Button variant="destructive" className="w-full" onClick={handleDelete}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modals */}
+      <ProductPreviewModal 
+        product={product}
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+      />
+      
+      <DeleteConfirmationModal 
+        product={product}
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        isLoading={deleteProductMutation.isPending}
+      />
     </div>
   );
 }
