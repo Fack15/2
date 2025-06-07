@@ -14,6 +14,7 @@ import CreateProductPage from "@/pages/CreateProductPage";
 import IngredientsPage from "@/pages/IngredientsPage";
 import CreateIngredientPage from "@/pages/CreateIngredientPage";
 import EditIngredientPage from "@/pages/EditIngredientPage";
+import EditProductPage from "@/pages/EditProductPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +31,11 @@ function Router() {
       <Route path="/products/create">
         <ProtectedRoute>
           <CreateProductPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/products/edit/:id">
+        <ProtectedRoute>
+          <EditProductPage />
         </ProtectedRoute>
       </Route>
       <Route path="/products/:id">
