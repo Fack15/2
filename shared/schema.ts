@@ -41,6 +41,7 @@ export const products = pgTable("products", {
   ean: text("ean"),
   externalLink: text("external_link"),
   redirectLink: text("redirect_link"),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdBy: integer("created_by"),

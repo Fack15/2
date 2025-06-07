@@ -8,6 +8,9 @@ import {
   registerSchema,
 } from "@shared/schema";
 import { AuthService } from "./auth";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configuration endpoint
