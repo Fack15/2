@@ -427,34 +427,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const products = await storage.getProducts();
       console.log(`Found ${products.length} products to export`);
       
-      // Transform products for Excel export
+      // Transform products for Excel export - specific fields only
       const exportData = products.map(product => ({
         Name: product.name,
-        Brand: product.brand,
         'Net Volume': product.netVolume,
         Vintage: product.vintage,
-        'Wine Type': product.wineType,
+        Type: product.wineType,
         'Sugar Content': product.sugarContent,
         Appellation: product.appellation,
-        'Alcohol Content': product.alcoholContent,
-        'Packaging Gases': product.packagingGases,
-        'Portion Size': product.portionSize,
-        'Kcal': product.kcal,
-        'KJ': product.kj,
-        Fat: product.fat,
-        Carbohydrates: product.carbohydrates,
-        Organic: product.organic,
-        Vegetarian: product.vegetarian,
-        Vegan: product.vegan,
-        'Operator Type': product.operatorType,
-        'Operator Name': product.operatorName,
-        'Operator Address': product.operatorAddress,
-        'Operator Info': product.operatorInfo,
-        'Country of Origin': product.countryOfOrigin,
-        SKU: product.sku,
-        EAN: product.ean,
-        'External Link': product.externalLink,
-        'Redirect Link': product.redirectLink
+        SKU: product.sku
       }));
 
       console.log("Creating Excel worksheet...");
