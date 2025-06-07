@@ -9,8 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useAuth } from '@/lib/auth';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
 
 const registerSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
@@ -30,7 +32,8 @@ export default function RegisterPage() {
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      email: 'a90685766@gmail.com',
+      username: '',
+      email: '',
       password: '',
       confirmPassword: '',
     },
@@ -39,21 +42,30 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      // Simulate registration process - in a real app this would create a new user
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: data.username,
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const result = await response.json();
       
-      // Auto-login after successful registration
-      const result = await login(data.email, data.password);
       if (result.success) {
         toast({
           title: "Registration successful!",
-          description: "Your account has been created and you're now logged in.",
+          description: result.message || "Please check your email to confirm your account.",
         });
-        setLocation('/products');
+        setLocation('/login');
       } else {
         toast({
           title: "Registration failed",
-          description: "There was an issue creating your account.",
+          description: result.message || "There was an issue creating your account.",
           variant: "destructive",
         });
       }
@@ -80,12 +92,26 @@ export default function RegisterPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="text" placeholder="Enter your username" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" />
+                      <Input {...field} type="email" placeholder="Enter your email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -99,7 +125,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" />
+                      <Input {...field} type="password" placeholder="Enter your password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -113,7 +139,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" />
+                      <Input {...field} type="password" placeholder="Confirm your password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,7 +157,7 @@ export default function RegisterPage() {
           </Form>
           
           <p className="text-center text-sm text-gray-600 mt-6">
-            Already have an account? <button onClick={() => setLocation('/login')} className="text-primary hover:underline">Login</button>
+            Already have an account? <Link href="/login" className="text-blue-600 hover:text-blue-500 dark:text-blue-400">Sign in</Link>
           </p>
         </CardContent>
       </Card>
