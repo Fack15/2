@@ -21,8 +21,16 @@ export default function ProductPreviewModal({ product, isOpen, onClose }: Produc
         
         <div className="space-y-6">
           {/* Product Image */}
-          <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-            <span className="text-gray-500">Product Image</span>
+          <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+            {product.imageUrl ? (
+              <img 
+                src={product.imageUrl} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-gray-500">No Image Available</span>
+            )}
           </div>
 
           {/* Basic Information */}

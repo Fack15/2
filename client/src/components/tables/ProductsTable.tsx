@@ -26,6 +26,7 @@ export default function ProductsTable({ products, onEdit, onDelete, onDuplicate,
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50 border-b border-gray-200">
+            <TableHead className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Image</TableHead>
             <TableHead className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Name</TableHead>
             <TableHead className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Net Volume</TableHead>
             <TableHead className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Vintage</TableHead>
@@ -39,6 +40,19 @@ export default function ProductsTable({ products, onEdit, onDelete, onDuplicate,
         <TableBody className="divide-y divide-gray-200">
           {products.map((product) => (
             <TableRow key={product.id} className="hover:bg-gray-50 transition-colors">
+              <TableCell className="px-6 py-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  {product.imageUrl ? (
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-gray-400">No Image</span>
+                  )}
+                </div>
+              </TableCell>
               <TableCell className="px-6 py-4">
                 <div className="font-medium text-gray-900">{product.name}</div>
               </TableCell>
