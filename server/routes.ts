@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -12,7 +13,41 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for image uploads
+const storage_multer = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage_multer,
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not an image! Please upload only images.'));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve uploaded files statically
+  app.use('/uploads', express.static(uploadsDir));
+
   // Configuration endpoint
   app.get("/api/config", (req, res) => {
     res.json({
@@ -157,6 +192,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
+  // Image upload routes
+  app.post("/api/products/:id/image", upload.single('image'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      const imageUrl = `/uploads/${req.file.filename}`;
+      
+      // Update product with new image URL
+      const updatedProduct = await storage.updateProduct(id, { imageUrl });
+      
+      if (!updatedProduct) {
+        return res.status(500).json({ error: "Failed to update product" });
+      }
+
+      res.json({ imageUrl, message: "Image uploaded successfully" });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  app.delete("/api/products/:id/image", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      if (product.imageUrl) {
+        // Delete the image file from disk
+        const imagePath = path.join(process.cwd(), product.imageUrl);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      }
+
+      // Remove image URL from product
+      const updatedProduct = await storage.updateProduct(id, { imageUrl: null });
+      
+      if (!updatedProduct) {
+        return res.status(500).json({ error: "Failed to update product" });
+      }
+
+      res.json({ message: "Image deleted successfully" });
+    } catch (error) {
+      console.error("Image delete error:", error);
+      res.status(500).json({ error: "Failed to delete image" });
     }
   });
 

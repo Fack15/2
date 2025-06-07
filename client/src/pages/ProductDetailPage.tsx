@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ArrowLeft, Download, Copy, Edit, Trash2, Eye, QrCode, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ export default function ProductDetailPage() {
   const [match, params] = useRoute('/products/:id');
   const [showPreview, setShowPreview] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -65,6 +66,56 @@ export default function ProductDetailPage() {
       toast({
         title: "Error",
         description: "Failed to duplicate product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch(`/api/products/${params?.id}/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products', params?.id] });
+      toast({
+        title: "Image uploaded",
+        description: "Product image has been uploaded successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: () => apiRequest(`/api/products/${params?.id}/image`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products', params?.id] });
+      toast({
+        title: "Image deleted",
+        description: "Product image has been deleted successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete image",
         variant: "destructive",
       });
     },
@@ -121,6 +172,25 @@ export default function ProductDetailPage() {
       title: "Link copied",
       description: "Link has been copied to clipboard",
     });
+  };
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadImageMutation.mutate(file);
+    }
+    // Reset the input value to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteImage = () => {
+    deleteImageMutation.mutate();
   };
 
   if (isLoading) {
@@ -263,25 +333,51 @@ export default function ProductDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-500">Product Image Placeholder</span>
+                <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  {product.imageUrl ? (
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-gray-500">Product Image Placeholder</span>
+                  )}
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleImageUpload}
+                    disabled={uploadImageMutation.isPending}
+                  >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Image
+                    {product.imageUrl ? 'Change Image' : 'Upload Image'}
                   </Button>
-                  <Button variant="outline">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Change Image
-                  </Button>
-                  <Button variant="destructive">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Image
-                  </Button>
+                  {product.imageUrl && (
+                    <Button 
+                      variant="destructive"
+                      onClick={handleDeleteImage}
+                      disabled={deleteImageMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Image
+                    </Button>
+                  )}
                 </div>
+                {(uploadImageMutation.isPending || deleteImageMutation.isPending) && (
+                  <p className="text-sm text-blue-600">
+                    {uploadImageMutation.isPending ? 'Uploading...' : 'Deleting...'}
+                  </p>
+                )}
                 <p className="text-sm text-gray-500">
-                  Supported formats: JPG, PNG. Recommended dimensions: 1000x750px
+                  Supported formats: JPG, PNG. Recommended dimensions: 1000x750px. Max file size: 5MB
                 </p>
               </div>
             </CardContent>
