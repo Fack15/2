@@ -407,6 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Starting products export...");
       const products = await storage.getProducts();
       console.log(`Found ${products.length} products to export`);
+      console.log("Sample product:", products[0]);
       
       // Transform products for Excel export - specific fields only
       const exportData = products.map(product => ({
@@ -432,9 +433,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.send(buffer);
       console.log("Export completed successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Export error:", error);
-      res.status(500).json({ error: "Failed to export products" });
+      res.status(500).json({ error: "Failed to export products", details: error?.message || String(error) });
     }
   });
 
