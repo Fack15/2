@@ -1,48 +1,57 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiRequest } from './queryClient';
+import { supabase } from './supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
-  id: number;
-  username: string;
+  id: string;
   email: string;
-  isEmailConfirmed: boolean;
+  email_confirmed_at?: string;
+  user_metadata?: {
+    username?: string;
+  };
 }
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  setUser: (user: User, token: string) => void;
+  logout: () => Promise<void>;
+  setUser: (user: User | null) => void;
+  checkSession: () => Promise<void>;
 }
 
 export const useAuth = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
+      loading: true,
       login: async (email: string, password: string) => {
         try {
-          console.log('login', { email, password });
-          const response = await apiRequest('/api/auth/login', {
-            method: 'POST',
-            data: { email, password },
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
           });
 
-          if (response.success) {
-            set({ 
-              user: response.user, 
-              token: response.token,
-              isAuthenticated: true 
-            });
-            return { success: true };
-          } else {
-            return { success: false, error: response.message };
+          if (error) {
+            return { success: false, error: error.message };
           }
+
+          if (data.user) {
+            const user: User = {
+              id: data.user.id,
+              email: data.user.email || '',
+              email_confirmed_at: data.user.email_confirmed_at,
+              user_metadata: data.user.user_metadata,
+            };
+            set({ user, isAuthenticated: true });
+            return { success: true };
+          }
+
+          return { success: false, error: 'Login failed' };
         } catch (error) {
           console.error('Login error:', error);
           return { success: false, error: 'Login failed' };
@@ -50,25 +59,59 @@ export const useAuth = create<AuthState>()(
       },
       register: async (username: string, email: string, password: string) => {
         try {
-          const response = await apiRequest('/api/auth/register', {
-            method: 'POST',
-            data: { username, email, password },
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                username: username,
+              },
+            },
           });
 
-          return { 
-            success: response.success, 
-            error: response.success ? undefined : response.message 
-          };
+          if (error) {
+            return { success: false, error: error.message };
+          }
+
+          if (data.user) {
+            return { 
+              success: true, 
+              error: undefined 
+            };
+          }
+
+          return { success: false, error: 'Registration failed' };
         } catch (error) {
           console.error('Registration error:', error);
           return { success: false, error: 'Registration failed' };
         }
       },
-      logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
+      logout: async () => {
+        await supabase.auth.signOut();
+        set({ user: null, isAuthenticated: false });
       },
-      setUser: (user: User, token: string) => {
-        set({ user, token, isAuthenticated: true });
+      setUser: (user: User | null) => {
+        set({ user, isAuthenticated: !!user });
+      },
+      checkSession: async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session?.user) {
+            const user: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              email_confirmed_at: session.user.email_confirmed_at,
+              user_metadata: session.user.user_metadata,
+            };
+            set({ user, isAuthenticated: true, loading: false });
+          } else {
+            set({ user: null, isAuthenticated: false, loading: false });
+          }
+        } catch (error) {
+          console.error('Session check error:', error);
+          set({ user: null, isAuthenticated: false, loading: false });
+        }
       },
     }),
     {
