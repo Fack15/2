@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 
 const registerSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
@@ -25,14 +24,13 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -42,30 +40,18 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: data.username,
-          email: data.email,
-          password: data.password,
-        }),
-      });
-
-      const result = await response.json();
+      const result = await register(data.email, data.password);
       
       if (result.success) {
         toast({
           title: "Registration successful!",
-          description: result.message || "Please check your email to confirm your account.",
+          description: "Please check your email to confirm your account before logging in.",
         });
         setLocation('/login');
       } else {
         toast({
           title: "Registration failed",
-          description: result.message || "There was an issue creating your account.",
+          description: result.error || "There was an issue creating your account.",
           variant: "destructive",
         });
       }
@@ -90,20 +76,6 @@ export default function RegisterPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="text" placeholder="Enter your username" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="email"

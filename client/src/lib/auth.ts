@@ -1,78 +1,121 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiRequest } from './queryClient';
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  isEmailConfirmed: boolean;
-}
+import { supabase } from '@shared/supabase';
+import type { User, Session } from '@shared/supabase';
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  session: Session | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  setUser: (user: User, token: string) => void;
+  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 export const useAuth = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      login: async (email: string, password: string) => {
-        try {
-          console.log('login', { email, password });
-          const response = await apiRequest('/api/auth/login', {
-            method: 'POST',
-            data: { email, password },
+  (set, get) => ({
+    user: null,
+    session: null,
+    isAuthenticated: false,
+    isLoading: true,
+    
+    login: async (email: string, password: string) => {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        
+        if (data.user && data.session) {
+          set({ 
+            user: data.user, 
+            session: data.session, 
+            isAuthenticated: true,
+            isLoading: false
           });
+          return { success: true };
+        }
+        
+        return { success: false, error: 'Login failed' };
+      } catch (error) {
+        console.error('Login error:', error);
+        return { success: false, error: 'Network error' };
+      }
+    },
 
-          if (response.success) {
-            set({ 
-              user: response.user, 
-              token: response.token,
-              isAuthenticated: true 
-            });
-            return { success: true };
-          } else {
-            return { success: false, error: response.message };
+    register: async (email: string, password: string) => {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`
           }
-        } catch (error) {
-          console.error('Login error:', error);
-          return { success: false, error: 'Login failed' };
+        });
+        
+        if (error) {
+          return { success: false, error: error.message };
         }
-      },
-      register: async (username: string, email: string, password: string) => {
-        try {
-          const response = await apiRequest('/api/auth/register', {
-            method: 'POST',
-            data: { username, email, password },
-          });
+        
+        if (data.user) {
+          return { success: true };
+        }
+        
+        return { success: false, error: 'Registration failed' };
+      } catch (error) {
+        console.error('Registration error:', error);
+        return { success: false, error: 'Network error' };
+      }
+    },
 
-          return { 
-            success: response.success, 
-            error: response.success ? undefined : response.message 
-          };
-        } catch (error) {
-          console.error('Registration error:', error);
-          return { success: false, error: 'Registration failed' };
+    logout: async () => {
+      await supabase.auth.signOut();
+      set({ user: null, session: null, isAuthenticated: false });
+    },
+
+    initialize: async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          set({ 
+            user: session.user, 
+            session, 
+            isAuthenticated: true,
+            isLoading: false
+          });
+        } else {
+          set({ isLoading: false });
         }
-      },
-      logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
-      },
-      setUser: (user: User, token: string) => {
-        set({ user, token, isAuthenticated: true });
-      },
-    }),
-    {
-      name: 'auth-storage',
-    }
-  )
+
+        // Listen for auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+          if (session) {
+            set({ 
+              user: session.user, 
+              session, 
+              isAuthenticated: true,
+              isLoading: false
+            });
+          } else {
+            set({ 
+              user: null, 
+              session: null, 
+              isAuthenticated: false,
+              isLoading: false
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        set({ isLoading: false });
+      }
+    },
+  })
 );
