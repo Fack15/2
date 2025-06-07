@@ -360,34 +360,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const row = data[i] as any;
           
-          // Map Excel columns to product fields
+          // Map Excel columns to product fields - specific fields only
           const productData = {
             name: row.name || row.Name || row.NAME,
-            brand: row.brand || row.Brand || row.BRAND,
             netVolume: row.netVolume || row['Net Volume'] || row.NET_VOLUME || row.netvolume,
             vintage: row.vintage || row.Vintage || row.VINTAGE,
-            wineType: row.wineType || row['Wine Type'] || row.WINE_TYPE || row.winetype,
+            wineType: row.wineType || row['Wine Type'] || row.Type || row.type || row.WINE_TYPE || row.winetype,
             sugarContent: row.sugarContent || row['Sugar Content'] || row.SUGAR_CONTENT || row.sugarcontent,
             appellation: row.appellation || row.Appellation || row.APPELLATION,
-            alcoholContent: row.alcoholContent || row['Alcohol Content'] || row.ALCOHOL_CONTENT || row.alcoholcontent,
-            packagingGases: row.packagingGases || row['Packaging Gases'] || row.PACKAGING_GASES || row.packaginggases,
-            portionSize: row.portionSize || row['Portion Size'] || row.PORTION_SIZE || row.portionsize,
-            kcal: row.kcal || row.Kcal || row.KCAL,
-            kj: row.kj || row.KJ || row.kJ,
-            fat: row.fat || row.Fat || row.FAT,
-            carbohydrates: row.carbohydrates || row.Carbohydrates || row.CARBOHYDRATES,
-            organic: row.organic || row.Organic || row.ORGANIC || false,
-            vegetarian: row.vegetarian || row.Vegetarian || row.VEGETARIAN || false,
-            vegan: row.vegan || row.Vegan || row.VEGAN || false,
-            operatorType: row.operatorType || row['Operator Type'] || row.OPERATOR_TYPE || row.operatortype,
-            operatorName: row.operatorName || row['Operator Name'] || row.OPERATOR_NAME || row.operatorname,
-            operatorAddress: row.operatorAddress || row['Operator Address'] || row.OPERATOR_ADDRESS || row.operatoraddress,
-            operatorInfo: row.operatorInfo || row['Operator Info'] || row.OPERATOR_INFO || row.operatorinfo,
-            countryOfOrigin: row.countryOfOrigin || row['Country of Origin'] || row.COUNTRY_OF_ORIGIN || row.countryoforigin,
-            sku: row.sku || row.SKU,
-            ean: row.ean || row.EAN,
-            externalLink: row.externalLink || row['External Link'] || row.EXTERNAL_LINK || row.externallink,
-            redirectLink: row.redirectLink || row['Redirect Link'] || row.REDIRECT_LINK || row.redirectlink
+            sku: row.sku || row.SKU
           };
 
           // Validate required fields
