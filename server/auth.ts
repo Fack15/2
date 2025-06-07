@@ -111,6 +111,7 @@ export class AuthService {
         email,
         password: hashedPassword,
       });
+      console.log('created user', user, 'confirmation token', confirmationToken, 'token expiry', tokenExpiry, 'email', email, 'username', username, 'password', password, 'hashed password', hashedPassword)
 
       // Update user with confirmation token
       await storage.updateUser(user.id, {

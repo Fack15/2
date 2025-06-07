@@ -27,10 +27,10 @@ export const useAuth = create<AuthState>()(
       isAuthenticated: false,
       login: async (email: string, password: string) => {
         try {
+          console.log('login', { email, password });
           const response = await apiRequest('/api/auth/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            data: { email, password },
           });
 
           if (response.success) {
@@ -44,6 +44,7 @@ export const useAuth = create<AuthState>()(
             return { success: false, error: response.message };
           }
         } catch (error) {
+          console.error('Login error:', error);
           return { success: false, error: 'Login failed' };
         }
       },
@@ -51,8 +52,7 @@ export const useAuth = create<AuthState>()(
         try {
           const response = await apiRequest('/api/auth/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password, confirmPassword: password }),
+            data: { username, email, password },
           });
 
           return { 
@@ -60,6 +60,7 @@ export const useAuth = create<AuthState>()(
             error: response.success ? undefined : response.message 
           };
         } catch (error) {
+          console.error('Registration error:', error);
           return { success: false, error: 'Registration failed' };
         }
       },

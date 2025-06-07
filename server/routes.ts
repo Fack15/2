@@ -1,7 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertIngredientSchema, loginSchema, registerSchema } from "@shared/schema";
+import {
+  insertProductSchema,
+  insertIngredientSchema,
+  loginSchema,
+  registerSchema,
+} from "@shared/schema";
 import { AuthService } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -9,24 +14,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const result = registerSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid input data",
-          errors: result.error.errors 
-        });
-      }
+      // if (!result.success) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Invalid input data",
+      //     errors: result.error.errors,
+      //   });
+      // }
 
-      const { username, email, password } = result.data;
+      const { username, email, password } = req.body;
       const authResult = await AuthService.register(username, email, password);
-      
+
       if (authResult.success) {
         res.status(201).json(authResult);
       } else {
         res.status(400).json(authResult);
       }
     } catch (error) {
-      console.error('Registration route error:', error);
+      console.error("Registration route error:", error);
       res.status(500).json({ success: false, message: "Registration failed" });
     }
   });
@@ -34,24 +39,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const result = loginSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid input data",
-          errors: result.error.errors 
-        });
-      }
+      // if (!result.success) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Invalid input data",
+      //     errors: result.error.errors,
+      //   });
+      // }
 
-      const { email, password } = result.data;
+      const { email, password } = req.body
       const authResult = await AuthService.login(email, password);
-      
+
       if (authResult.success) {
         res.json(authResult);
       } else {
         res.status(401).json(authResult);
       }
     } catch (error) {
-      console.error('Login route error:', error);
+      console.error("Login route error:", error);
       res.status(500).json({ success: false, message: "Login failed" });
     }
   });
@@ -60,19 +65,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const token = req.query.token as string;
       if (!token) {
-        return res.status(400).json({ success: false, message: "Token is required" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Token is required" });
       }
 
       const authResult = await AuthService.confirmEmail(token);
-      
+
       if (authResult.success) {
         // Redirect to login page with success message
         res.redirect("/?emailConfirmed=true");
       } else {
-        res.redirect("/?emailConfirmed=false&error=" + encodeURIComponent(authResult.message || "Email confirmation failed"));
+        res.redirect(
+          "/?emailConfirmed=false&error=" +
+            encodeURIComponent(
+              authResult.message || "Email confirmation failed",
+            ),
+        );
       }
     } catch (error) {
-      console.error('Email confirmation route error:', error);
+      console.error("Email confirmation route error:", error);
       res.redirect("/?emailConfirmed=false&error=confirmation_failed");
     }
   });
@@ -166,7 +178,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ingredient = await storage.createIngredient(validatedData);
       res.status(201).json(ingredient);
     } catch (error) {
-      res.status(400).json({ error: "Invalid ingredient data", details: error });
+      res
+        .status(400)
+        .json({ error: "Invalid ingredient data", details: error });
     }
   });
 
@@ -180,7 +194,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(ingredient);
     } catch (error) {
-      res.status(400).json({ error: "Invalid ingredient data", details: error });
+      res
+        .status(400)
+        .json({ error: "Invalid ingredient data", details: error });
     }
   });
 

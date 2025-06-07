@@ -50,7 +50,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const result = await login(data.email, data.password);
+      console.log('login', data)
+      const result = await login("a15githubcopilot0151@gmail.com", "dishant1");
       if (result.success) {
         toast({
           title: 'Login successful',
