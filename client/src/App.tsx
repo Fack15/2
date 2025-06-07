@@ -16,6 +16,8 @@ import CreateIngredientPage from "@/pages/CreateIngredientPage";
 import EditIngredientPage from "@/pages/EditIngredientPage";
 import EditProductPage from "@/pages/EditProductPage";
 import NotFound from "@/pages/not-found";
+import { useAuth } from "@/lib/auth";
+import { useEffect } from "react";
 
 function Router() {
   return (
@@ -64,6 +66,12 @@ function Router() {
 }
 
 function App() {
+  const { initialize } = useAuth();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

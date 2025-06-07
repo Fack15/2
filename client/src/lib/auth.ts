@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '@shared/supabase';
-import type { User, Session } from '@shared/supabase';
+import { supabase } from './supabase-client';
+import type { User, Session } from './supabase-client';
 
 interface AuthState {
   user: User | null;
@@ -95,7 +95,7 @@ export const useAuth = create<AuthState>()(
         }
 
         // Listen for auth state changes
-        supabase.auth.onAuthStateChange((event, session) => {
+        supabase.auth.onAuthStateChange((event: string, session: any) => {
           if (session) {
             set({ 
               user: session.user, 
