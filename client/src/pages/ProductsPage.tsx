@@ -68,6 +68,60 @@ export default function ProductsPage() {
     },
   });
 
+  const importProductsMutation = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return fetch('/api/products/import', {
+        method: 'POST',
+        body: formData,
+      }).then(res => res.json());
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Import completed",
+        description: `Imported ${data.imported} products${data.errors.length > 0 ? ` with ${data.errors.length} errors` : ''}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to import products",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const exportProductsMutation = useMutation({
+    mutationFn: () => 
+      fetch('/api/products/export')
+        .then(res => res.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'products.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }),
+    onSuccess: () => {
+      toast({
+        title: "Export completed",
+        description: "Products exported successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to export products",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,24 +147,29 @@ export default function ProductsPage() {
     setShowPreview(true);
   };
 
+  const handleImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      importProductsMutation.mutate(file);
+    }
+    // Reset the input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleExport = () => {
+    exportProductsMutation.mutate();
+  };
+
   const confirmDelete = () => {
     if (selectedProduct) {
       deleteProductMutation.mutate(selectedProduct.id);
     }
-  };
-
-  const handleImport = () => {
-    toast({
-      title: "Import products",
-      description: "Import functionality would be implemented here",
-    });
-  };
-
-  const handleExport = () => {
-    toast({
-      title: "Export products",
-      description: "Export functionality would be implemented here",
-    });
   };
 
   return (
@@ -159,6 +218,15 @@ export default function ProductsPage() {
         onDelete={handleDelete}
         onDuplicate={handleDuplicate}
         onPreview={handlePreview}
+      />
+
+      {/* Hidden file input for Excel import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".xlsx,.xls,.csv"
+        style={{ display: 'none' }}
       />
 
       {/* Modals */}
