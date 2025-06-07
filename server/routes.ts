@@ -10,6 +10,14 @@ import {
 import { AuthService } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configuration endpoint
+  app.get("/api/config", (req, res) => {
+    res.json({
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+    });
+  });
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {

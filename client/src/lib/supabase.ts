@@ -1,25 +1,32 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Get Supabase credentials from the server endpoint
-let supabaseUrl = ''
-let supabaseAnonKey = ''
+let supabaseInstance: SupabaseClient | null = null;
+let configPromise: Promise<any> | null = null;
 
-// Fetch config from server
-fetch('/api/config')
-  .then(res => res.json())
-  .then(config => {
-    supabaseUrl = config.supabaseUrl
-    supabaseAnonKey = config.supabaseAnonKey
-  })
-  .catch(() => {
-    // Fallback for development
-    supabaseUrl = 'placeholder'
-    supabaseAnonKey = 'placeholder'
-  })
+const getSupabaseConfig = async () => {
+  if (!configPromise) {
+    configPromise = fetch('/api/config').then(res => res.json());
+  }
+  return configPromise;
+};
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder'
-)
+export const getSupabase = async (): Promise<SupabaseClient> => {
+  if (!supabaseInstance) {
+    const config = await getSupabaseConfig();
+    supabaseInstance = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    });
+  }
+  return supabaseInstance;
+};
+
+// Export a promise-based client for immediate use
+export const supabase = (async () => {
+  return await getSupabase();
+})();
 
 export type { User } from '@supabase/supabase-js'
