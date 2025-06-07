@@ -434,7 +434,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(buffer);
       console.log("Export completed successfully");
     } catch (error: any) {
-      console.error("Export error:", error);
+      console.error("Export error details:", error);
+      console.error("Error stack:", error?.stack);
       res.status(500).json({ error: "Failed to export products", details: error?.message || String(error) });
     }
   });
