@@ -1,0 +1,38 @@
+[vite] connecting...
+[vite] connected.
+[vite] hot updated: /src/pages/RegisterPage.tsx
+[vite] hot updated: /src/index.css?v=hnvLOTn2XOj68Wd-ppA7P
+[vite] hot updated: /src/pages/LoginPage.tsx
+[vite] hot updated: /src/components/layout/ProtectedRoute.tsx
+[vite] hot updated: /src/components/layout/Navigation.tsx
+[vite] hot updated: /src/App.tsx?v=hnvLOTn2XOj68Wd-ppA7P
+[vite] hot updated: /src/index.css?v=hnvLOTn2XOj68Wd-ppA7P
+[vite] hot updated: /src/App.tsx?v=hnvLOTn2XOj68Wd-ppA7P
+[vite] hot updated: /src/index.css?v=hnvLOTn2XOj68Wd-ppA7P
+[vite] hot updated: /src/pages/RegisterPage.tsx
+[vite] hot updated: /src/index.css?v=hnvLOTn2XOj68Wd-ppA7P
+[vite] hot updated: /src/pages/LoginPage.tsx
+[vite] hot updated: /src/components/layout/ProtectedRoute.tsx
+[vite] hot updated: /src/components/layout/Navigation.tsx
+[vite] hot updated: /src/App.tsx?v=hnvLOTn2XOj68Wd-ppA7P
+Registration error: 
+Error {}
+
+Registration error: 
+Error {}
+
+Registration error: 
+Error {}
+message: "Supabase credentials not configured"
+stack: "Error: Supabase credentials not configured↵ at Object.signUp (https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/src/lib/supabase-client.ts:12:40)↵ at register (https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/src/lib/auth.ts?t=1749333374673:35:53)↵ at onSubmit (https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/src/pages/RegisterPage.tsx?t=1749333374673:55:28)↵ at https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YGCRICWC.js?v=f4849b39:1465:15"
+get stack: ƒ ()
+set stack: ƒ ()
+length: 1
+name: ""
+[[Prototype]]: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://7e210941-2d80-45d7-8fef-2163243926f4-00-girdwrl8xr14.kirk.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
