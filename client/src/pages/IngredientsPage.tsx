@@ -70,6 +70,60 @@ export default function IngredientsPage() {
     },
   });
 
+  const importIngredientsMutation = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return fetch('/api/ingredients/import', {
+        method: 'POST',
+        body: formData,
+      }).then(res => res.json());
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ingredients'] });
+      toast({
+        title: "Import completed",
+        description: `Imported ${data.imported} ingredients${data.errors.length > 0 ? ` with ${data.errors.length} errors` : ''}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to import ingredients",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const exportIngredientsMutation = useMutation({
+    mutationFn: () => 
+      fetch('/api/ingredients/export')
+        .then(res => res.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'ingredients.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }),
+    onSuccess: () => {
+      toast({
+        title: "Export completed",
+        description: "Ingredients exported successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to export ingredients",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredIngredients = ingredients.filter(ingredient =>
     ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ingredient.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,17 +143,22 @@ export default function IngredientsPage() {
   };
 
   const handleImport = () => {
-    toast({
-      title: "Import ingredients",
-      description: "Import functionality would be implemented here",
-    });
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      importIngredientsMutation.mutate(file);
+    }
+    // Reset the input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleExport = () => {
-    toast({
-      title: "Export ingredients",
-      description: "Export functionality would be implemented here",
-    });
+    exportIngredientsMutation.mutate();
   };
 
   return (
@@ -147,6 +206,15 @@ export default function IngredientsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onDuplicate={handleDuplicate}
+      />
+
+      {/* Hidden file input for Excel import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".xlsx,.xls,.csv"
+        style={{ display: 'none' }}
       />
     </div>
   );
