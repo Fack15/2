@@ -14,14 +14,10 @@ export const products = pgTable("products", {
   brand: text("brand"),
   netVolume: text("net_volume"),
   vintage: text("vintage"),
-  type: text("type"),
+  wineType: text("wine_type"),
   sugarContent: text("sugar_content"),
   appellation: text("appellation"),
   alcoholContent: text("alcohol_content"),
-  country: text("country"),
-  sku: text("sku").unique(),
-  ean: text("ean"),
-  ingredients: text("ingredients"),
   packagingGases: text("packaging_gases"),
   portionSize: text("portion_size"),
   kcal: text("kcal"),
@@ -35,10 +31,14 @@ export const products = pgTable("products", {
   operatorName: text("operator_name"),
   operatorAddress: text("operator_address"),
   operatorInfo: text("operator_info"),
-  externalShortLink: text("external_short_link"),
+  countryOfOrigin: text("country_of_origin"),
+  sku: text("sku"),
+  ean: text("ean"),
+  externalLink: text("external_link"),
   redirectLink: text("redirect_link"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: integer("created_by"),
 });
 
 export const ingredients = pgTable("ingredients", {
@@ -50,6 +50,7 @@ export const ingredients = pgTable("ingredients", {
   details: text("details"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: integer("created_by"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
