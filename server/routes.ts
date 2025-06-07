@@ -12,6 +12,7 @@ import { AuthService } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import * as XLSX from "xlsx";
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -41,6 +42,26 @@ const upload = multer({
   },
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// Configure multer for Excel file uploads
+const uploadExcel = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: function (req, file, cb) {
+    const allowedMimes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv'
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not an Excel file! Please upload only Excel or CSV files.'));
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
   }
 });
 
