@@ -50,17 +50,24 @@ const uploadExcel = multer({
   storage: multer.memoryStorage(),
   fileFilter: function (req, file, cb) {
     console.log('Uploaded file mimetype:', file.mimetype);
+    console.log('Original filename:', file.originalname);
+    
     const allowedMimes = [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel',
       'text/csv',
       'text/plain',
-      'application/csv'
+      'application/csv',
+      'application/octet-stream' // Allow this and check file extension
     ];
-    if (allowedMimes.includes(file.mimetype)) {
+    
+    const allowedExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileExtension = file.originalname.toLowerCase().slice(file.originalname.lastIndexOf('.'));
+    
+    if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error(`Not an Excel file! Received: ${file.mimetype}. Please upload only Excel or CSV files.`));
+      cb(new Error(`Not an Excel/CSV file! Received: ${file.mimetype} with extension ${fileExtension}. Please upload only Excel or CSV files.`));
     }
   },
   limits: {
