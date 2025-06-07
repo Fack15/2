@@ -13,6 +13,9 @@ import type { Product } from '@shared/schema';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -30,11 +33,35 @@ export default function ProductsPage() {
         title: "Product deleted",
         description: "Product has been successfully deleted",
       });
+      setShowDeleteModal(false);
+      setSelectedProduct(null);
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to delete product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const duplicateProductMutation = useMutation({
+    mutationFn: (productData: any) => 
+      apiRequest('/api/products', { 
+        method: 'POST',
+        data: { ...productData, name: `${productData.name} (Copy)` }
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Product duplicated",
+        description: "Product has been successfully duplicated",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate product",
         variant: "destructive",
       });
     },
@@ -51,16 +78,24 @@ export default function ProductsPage() {
   };
 
   const handleDelete = (product: Product) => {
-    if (confirm(`Are you sure you want to delete ${product.name}?`)) {
-      deleteProductMutation.mutate(product.id);
-    }
+    setSelectedProduct(product);
+    setShowDeleteModal(true);
   };
 
   const handleDuplicate = (product: Product) => {
-    toast({
-      title: "Duplicate product",
-      description: `${product.name} would be duplicated`,
-    });
+    const { id, createdAt, updatedAt, ...productData } = product;
+    duplicateProductMutation.mutate(productData);
+  };
+
+  const handlePreview = (product: Product) => {
+    setSelectedProduct(product);
+    setShowPreview(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedProduct) {
+      deleteProductMutation.mutate(selectedProduct.id);
+    }
   };
 
   const handleImport = () => {
@@ -122,6 +157,22 @@ export default function ProductsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onDuplicate={handleDuplicate}
+        onPreview={handlePreview}
+      />
+
+      {/* Modals */}
+      <ProductPreviewModal 
+        product={selectedProduct}
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+      />
+      
+      <DeleteConfirmationModal 
+        product={selectedProduct}
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        isLoading={deleteProductMutation.isPending}
       />
     </div>
   );
