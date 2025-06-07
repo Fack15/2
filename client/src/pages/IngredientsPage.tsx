@@ -3,16 +3,71 @@ import { Plus, Upload, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import IngredientsTable from '@/components/tables/IngredientsTable';
-import { mockIngredients } from '@/lib/mock-data';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { Ingredient } from '@shared/schema';
 
 export default function IngredientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [ingredients] = useState<Ingredient[]>(mockIngredients);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: ingredients = [], isLoading } = useQuery({
+    queryKey: ['/api/ingredients'],
+    queryFn: async () => {
+      const response = await fetch('/api/ingredients');
+      if (!response.ok) throw new Error('Failed to fetch ingredients');
+      return response.json() as Promise<Ingredient[]>;
+    }
+  });
+
+  const deleteIngredientMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/ingredients/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ingredients'] });
+      toast({
+        title: "Ingredient deleted successfully",
+        description: "The ingredient has been removed from your inventory.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error deleting ingredient",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const duplicateIngredientMutation = useMutation({
+    mutationFn: async (ingredient: Ingredient) => {
+      const duplicateData = {
+        name: `${ingredient.name} (Copy)`,
+        category: ingredient.category,
+        eNumber: ingredient.eNumber,
+        allergens: ingredient.allergens,
+        details: ingredient.details,
+      };
+      return apiRequest('/api/ingredients', { method: 'POST', data: duplicateData });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ingredients'] });
+      toast({
+        title: "Ingredient duplicated successfully",
+        description: "A copy has been created.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error duplicating ingredient",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const filteredIngredients = ingredients.filter(ingredient =>
     ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -21,25 +76,15 @@ export default function IngredientsPage() {
   );
 
   const handleEdit = (ingredient: Ingredient) => {
-    toast({
-      title: "Edit ingredient",
-      description: `Editing ${ingredient.name}`,
-    });
+    setLocation(`/ingredients/${ingredient.id}/edit`);
   };
 
   const handleDelete = (ingredient: Ingredient) => {
-    toast({
-      title: "Delete ingredient",
-      description: `${ingredient.name} would be deleted`,
-      variant: "destructive",
-    });
+    deleteIngredientMutation.mutate(ingredient.id);
   };
 
   const handleDuplicate = (ingredient: Ingredient) => {
-    toast({
-      title: "Duplicate ingredient",
-      description: `${ingredient.name} would be duplicated`,
-    });
+    duplicateIngredientMutation.mutate(ingredient);
   };
 
   const handleImport = () => {

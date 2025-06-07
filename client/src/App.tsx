@@ -13,6 +13,7 @@ import ProductDetailPage from "@/pages/ProductDetailPage";
 import CreateProductPage from "@/pages/CreateProductPage";
 import IngredientsPage from "@/pages/IngredientsPage";
 import CreateIngredientPage from "@/pages/CreateIngredientPage";
+import EditIngredientPage from "@/pages/EditIngredientPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -44,6 +45,11 @@ function Router() {
       <Route path="/ingredients/create">
         <ProtectedRoute>
           <CreateIngredientPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/ingredients/:id/edit">
+        <ProtectedRoute>
+          <EditIngredientPage />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />
