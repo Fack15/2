@@ -7,8 +7,6 @@ import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import type { User } from '@shared/schema';
 
-type UserWithoutPassword = Omit<User, 'password'>;
-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
@@ -25,7 +23,7 @@ const transporter = nodemailer.createTransport({
 
 export interface AuthResponse {
   success: boolean;
-  user?: User;
+  user?: Omit<User, 'password'>;
   token?: string;
   message?: string;
 }
@@ -114,13 +112,21 @@ export class AuthService {
         password: hashedPassword,
       });
 
+      // Update user with confirmation token
+      await storage.updateUser(user.id, {
+        isEmailConfirmed: false,
+        emailConfirmationToken: confirmationToken,
+        emailConfirmationTokenExpiry: tokenExpiry,
+      });
+
       // Send confirmation email
       await this.sendConfirmationEmail(email, confirmationToken, username);
 
+      const { password: _, ...userWithoutPassword } = user;
       return {
         success: true,
         message: 'Registration successful! Please check your email to confirm your account.',
-        user: { ...user, password: undefined } as User,
+        user: userWithoutPassword,
       };
     } catch (error) {
       console.error('Registration error:', error);
@@ -145,9 +151,10 @@ export class AuthService {
       }
 
       const token = this.generateToken(user.id);
+      const { password: _, ...userWithoutPassword } = user;
       return {
         success: true,
-        user: { ...user, password: undefined } as User,
+        user: userWithoutPassword,
         token,
       };
     } catch (error) {
@@ -159,15 +166,15 @@ export class AuthService {
   static async confirmEmail(token: string): Promise<AuthResponse> {
     try {
       // Find user by confirmation token
-      const users = await storage.db.select().from(users).where(
+      const usersList = await db.select().from(users).where(
         eq(users.emailConfirmationToken, token)
       );
       
-      if (users.length === 0) {
+      if (usersList.length === 0) {
         return { success: false, message: 'Invalid confirmation token' };
       }
 
-      const user = users[0];
+      const user = usersList[0];
 
       // Check if token is expired
       if (user.emailConfirmationTokenExpiry && user.emailConfirmationTokenExpiry < new Date()) {
@@ -181,10 +188,15 @@ export class AuthService {
         emailConfirmationTokenExpiry: null,
       });
 
+      const userWithoutPassword = updatedUser ? (() => {
+        const { password: _, ...rest } = updatedUser;
+        return rest;
+      })() : undefined;
+
       return {
         success: true,
         message: 'Email confirmed successfully! You can now log in.',
-        user: updatedUser ? { ...updatedUser, password: undefined } as User : undefined,
+        user: userWithoutPassword,
       };
     } catch (error) {
       console.error('Email confirmation error:', error);
