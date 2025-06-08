@@ -128,7 +128,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Net Volume</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 750ml" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 750ml" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -141,7 +141,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>SKU</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. WIN-001" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. WIN-001" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -154,7 +154,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>EAN</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 1234567890123" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 1234567890123" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -178,7 +178,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Vintage</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 2019" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 2019" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -215,7 +215,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Sugar Content</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Dry, Brut" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Dry, Brut" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -228,7 +228,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Appellation</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Bordeaux AOC" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Bordeaux AOC" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -241,7 +241,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Alcohol Content</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 13.5%" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 13.5%" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -254,7 +254,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Country of Origin</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. France" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. France" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -277,7 +277,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                   <FormItem>
                     <FormLabel>Packaging Gases</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g. Nitrogen, Carbon dioxide" />
+                      <Input {...field} value={field.value || ''} placeholder="e.g. Nitrogen, Carbon dioxide" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
