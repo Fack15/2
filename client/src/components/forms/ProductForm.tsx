@@ -462,7 +462,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Operator Name</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Wine Company Ltd." />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Wine Company Ltd." />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -476,7 +476,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                   <FormItem>
                     <FormLabel>Operator Address</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Full business address..." className="h-20" />
+                      <Textarea {...field} value={field.value || ''} placeholder="Full business address..." className="h-20" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -489,7 +489,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                   <FormItem>
                     <FormLabel>Additional Operator Information</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Additional business information..." className="h-20" />
+                      <Textarea {...field} value={field.value || ''} placeholder="Additional business information..." className="h-20" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -512,7 +512,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>External Link</FormLabel>
                       <FormControl>
-                        <Input {...field} type="url" placeholder="https://example.com/product" />
+                        <Input {...field} value={field.value || ''} type="url" placeholder="https://example.com/product" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -525,7 +525,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Redirect Link</FormLabel>
                       <FormControl>
-                        <Input {...field} type="url" placeholder="https://redirect.com/product" />
+                        <Input {...field} value={field.value || ''} type="url" placeholder="https://redirect.com/product" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
