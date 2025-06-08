@@ -249,21 +249,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
-      const product = await storage.createProduct(validatedData);
+      const product = await storage.createProduct(validatedData, req.user.id);
       res.status(201).json(product);
     } catch (error) {
       res.status(400).json({ error: "Invalid product data", details: error });
     }
   });
 
-  app.put("/api/products/:id", async (req, res) => {
+  app.put("/api/products/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertProductSchema.partial().parse(req.body);
-      const product = await storage.updateProduct(id, validatedData);
+      const product = await storage.updateProduct(id, validatedData, req.user.id);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
@@ -348,9 +348,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ingredients routes
-  app.get("/api/ingredients", async (req, res) => {
+  app.get("/api/ingredients", requireAuth, async (req: any, res) => {
     try {
-      const ingredients = await storage.getIngredients();
+      const ingredients = await storage.getIngredients(req.user.id);
       res.json(ingredients);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch ingredients" });
@@ -358,10 +358,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export route must come before the parameterized route
-  app.get("/api/ingredients/export", async (req, res) => {
+  app.get("/api/ingredients/export", requireAuth, async (req: any, res) => {
     try {
       console.log("Starting ingredients export...");
-      const ingredients = await storage.getIngredients();
+      const ingredients = await storage.getIngredients(req.user.id);
       console.log(`Found ${ingredients.length} ingredients to export`);
       
       // Transform ingredients for Excel export
@@ -393,10 +393,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/ingredients/:id", async (req, res) => {
+  app.get("/api/ingredients/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const ingredient = await storage.getIngredient(id);
+      const ingredient = await storage.getIngredient(id, req.user.id);
       if (!ingredient) {
         return res.status(404).json({ error: "Ingredient not found" });
       }
@@ -406,10 +406,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ingredients", async (req, res) => {
+  app.post("/api/ingredients", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertIngredientSchema.parse(req.body);
-      const ingredient = await storage.createIngredient(validatedData);
+      const ingredient = await storage.createIngredient(validatedData, req.user.id);
       res.status(201).json(ingredient);
     } catch (error) {
       res
@@ -418,11 +418,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/ingredients/:id", async (req, res) => {
+  app.put("/api/ingredients/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertIngredientSchema.partial().parse(req.body);
-      const ingredient = await storage.updateIngredient(id, validatedData);
+      const ingredient = await storage.updateIngredient(id, validatedData, req.user.id);
       if (!ingredient) {
         return res.status(404).json({ error: "Ingredient not found" });
       }
@@ -434,10 +434,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/ingredients/:id", async (req, res) => {
+  app.delete("/api/ingredients/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteIngredient(id);
+      const success = await storage.deleteIngredient(id, req.user.id);
       if (!success) {
         return res.status(404).json({ error: "Ingredient not found" });
       }
