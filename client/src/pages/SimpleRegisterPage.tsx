@@ -1,28 +1,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/lib/auth';
-import { useLocation } from 'wouter';
+import { useAuth } from '@/lib/supabase-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'wouter';
+import { registerSchema, type RegisterFormData } from '@shared/auth-schema';
 
-const registerSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
-
-export default function RegisterPage() {
+export default function SimpleRegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const [, setLocation] = useLocation();
@@ -39,43 +27,45 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
-    try {
-      const result = await register(data.email, data.password);
-      
-      if (result.success) {
+    const result = await register(data.email, data.password);
+    
+    if (result.success) {
+      if (result.error) {
+        // This is the email confirmation message
         toast({
-          title: "Registration successful!",
-          description: "Please check your email to confirm your account before logging in.",
+          title: "Registration Successful",
+          description: result.error,
         });
         setLocation('/login');
       } else {
+        setLocation('/products');
         toast({
-          title: "Registration failed",
-          description: result.error || "There was an issue creating your account.",
-          variant: "destructive",
+          title: "Success",
+          description: "Account created successfully!",
         });
       }
-    } catch (error) {
+    } else {
       toast({
-        title: "Registration failed",
-        description: "An unexpected error occurred.",
+        title: "Error",
+        description: result.error || "Registration failed",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 px-4">
-      <Card className="shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-gray-900">Register</CardTitle>
-          <p className="text-gray-600">Create a new account</p>
+          <CardTitle>Create Account</CardTitle>
+          <CardDescription>
+            Enter your email and password to create a new account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -83,7 +73,11 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" placeholder="Enter your email" />
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -97,7 +91,11 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" placeholder="Enter your password" />
+                      <Input
+                        type="password"
+                        placeholder="Enter your password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -111,26 +109,31 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" placeholder="Confirm your password" />
+                      <Input
+                        type="password"
+                        placeholder="Confirm your password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <Button 
-                type="submit" 
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Creating account...' : 'Register'}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Creating account...' : 'Create Account'}
               </Button>
             </form>
           </Form>
           
-          <p className="text-center text-sm text-gray-600 mt-6">
-            Already have an account? <Link href="/login" className="text-blue-600 hover:text-blue-500 dark:text-blue-400">Sign in</Link>
-          </p>
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setLocation('/login')}
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              Already have an account? Sign in
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 import { useLocation } from 'wouter';
 import { Box, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/supabase-auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Navigation() {

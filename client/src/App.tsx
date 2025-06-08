@@ -6,8 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Navigation from "@/components/layout/Navigation";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import LandingPage from "@/pages/LandingPage";
-import LoginPage from "@/pages/LoginPage";
-import RegisterPage from "@/pages/RegisterPage";
+import SimpleLoginPage from "@/pages/SimpleLoginPage";
+import SimpleRegisterPage from "@/pages/SimpleRegisterPage";
 import ProductsPage from "@/pages/ProductsPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import CreateProductPage from "@/pages/CreateProductPage";
@@ -16,15 +16,15 @@ import CreateIngredientPage from "@/pages/CreateIngredientPage";
 import EditIngredientPage from "@/pages/EditIngredientPage";
 import EditProductPage from "@/pages/EditProductPage";
 import NotFound from "@/pages/not-found";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/supabase-auth";
 import { useEffect } from "react";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/register" component={RegisterPage} />
+      <Route path="/login" component={SimpleLoginPage} />
+      <Route path="/register" component={SimpleRegisterPage} />
       <Route path="/products">
         <ProtectedRoute>
           <ProductsPage />
