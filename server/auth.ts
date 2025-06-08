@@ -1,121 +1,41 @@
 import { supabase } from '@shared/supabase';
-import type { Profile } from '@shared/schema';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
-
-// Email transporter configuration
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-});
 
 export interface AuthResponse {
   success: boolean;
-  user?: Omit<User, 'password'>;
-  token?: string;
+  user?: any;
+  session?: any;
   message?: string;
 }
 
 export class AuthService {
-  static async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 12);
-  }
-
-  static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-    return bcrypt.compare(password, hashedPassword);
-  }
-
-  static generateToken(userId: number): string {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
-  }
-
-  static verifyToken(token: string): { userId: number } | null {
-    try {
-      return jwt.verify(token, JWT_SECRET) as { userId: number };
-    } catch {
-      return null;
-    }
-  }
-
-  static generateEmailConfirmationToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
-  static async sendConfirmationEmail(email: string, token: string, username: string): Promise<void> {
-    console.log(`Email confirmation would be sent to: ${email}`);
-    console.log(`Confirmation link: ${BASE_URL}/api/auth/confirm-email?token=${token}`);
-    console.log(`Username: ${username}`);
-    
-    // In a production environment, you would send an actual email here
-    // For now, users need to manually visit the confirmation link
-    if (EMAIL_USER && EMAIL_PASS) {
-      try {
-        await transporter.sendMail({
-          from: EMAIL_USER,
-          to: email,
-          subject: 'Confirm Your Email Address',
-          html: `
-            <h2>Welcome, ${username}!</h2>
-            <p>Please click the link below to confirm your email address:</p>
-            <a href="${BASE_URL}/api/auth/confirm-email?token=${token}">Confirm Email</a>
-            <p>This link will expire in 24 hours.</p>
-          `,
-        });
-        console.log('Confirmation email sent successfully');
-      } catch (error) {
-        console.error('Failed to send confirmation email:', error);
-        throw new Error('Failed to send confirmation email');
-      }
-    }
-  }
-
   static async register(username: string, email: string, password: string): Promise<AuthResponse> {
     try {
-      // Check if user already exists
-      const existingUserByEmail = await storage.getUserByEmail(email);
-      if (existingUserByEmail) {
-        return { success: false, message: 'Email already registered' };
-      }
-
-      const existingUserByUsername = await storage.getUserByUsername(username);
-      if (existingUserByUsername) {
-        return { success: false, message: 'Username already taken' };
-      }
-
-      // Hash password and generate confirmation token
-      const hashedPassword = await this.hashPassword(password);
-      const confirmationToken = this.generateEmailConfirmationToken();
-      const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-      // Create user
-      const user = await storage.createUser({
-        username,
+      const { data, error } = await supabase.auth.signUp({
         email,
-        password: hashedPassword,
-      });
-      console.log('created user', user, 'confirmation token', confirmationToken, 'token expiry', tokenExpiry, 'email', email, 'username', username, 'password', password, 'hashed password', hashedPassword)
-
-      // Update user with confirmation token
-      await storage.updateUser(user.id, {
-        isEmailConfirmed: false,
-        emailConfirmationToken: confirmationToken,
-        emailConfirmationTokenExpiry: tokenExpiry,
+        password,
+        options: {
+          data: {
+            username,
+          },
+        },
       });
 
-      // Send confirmation email
-      await this.sendConfirmationEmail(email, confirmationToken, username);
+      if (error) {
+        return { success: false, message: error.message };
+      }
 
-      const { password: _, ...userWithoutPassword } = user;
+      if (!data.user?.email_confirmed_at) {
+        return {
+          success: true,
+          message: 'Registration successful! Please check your email to confirm your account before logging in.',
+        };
+      }
+
       return {
         success: true,
-        message: 'Registration successful! Please check your email to confirm your account.',
-        user: userWithoutPassword,
+        user: data.user,
+        session: data.session,
+        message: 'Registration successful!',
       };
     } catch (error) {
       console.error('Registration error:', error);
@@ -125,26 +45,22 @@ export class AuthService {
 
   static async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return { success: false, message: 'Invalid email or password' };
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes('Email not confirmed')) {
+          return { success: false, message: 'Please confirm your email address before logging in' };
+        }
+        return { success: false, message: error.message };
       }
 
-      const isValidPassword = await this.verifyPassword(password, user.password);
-      if (!isValidPassword) {
-        return { success: false, message: 'Invalid email or password' };
-      }
-
-      if (!user.isEmailConfirmed) {
-        return { success: false, message: 'Please confirm your email address before logging in' };
-      }
-
-      const token = this.generateToken(user.id);
-      const { password: _, ...userWithoutPassword } = user;
       return {
         success: true,
-        user: userWithoutPassword,
-        token,
+        user: data.user,
+        session: data.session,
       };
     } catch (error) {
       console.error('Login error:', error);
@@ -152,44 +68,50 @@ export class AuthService {
     }
   }
 
-  static async confirmEmail(token: string): Promise<AuthResponse> {
+  static async logout(): Promise<AuthResponse> {
     try {
-      // Find user by confirmation token
-      const usersList = await db.select().from(users).where(
-        eq(users.emailConfirmationToken, token)
-      );
+      const { error } = await supabase.auth.signOut();
       
-      if (usersList.length === 0) {
-        return { success: false, message: 'Invalid confirmation token' };
+      if (error) {
+        return { success: false, message: error.message };
       }
 
-      const user = usersList[0];
-
-      // Check if token is expired
-      if (user.emailConfirmationTokenExpiry && user.emailConfirmationTokenExpiry < new Date()) {
-        return { success: false, message: 'Confirmation token has expired' };
-      }
-
-      // Update user to confirmed
-      const updatedUser = await storage.updateUser(user.id, {
-        isEmailConfirmed: true,
-        emailConfirmationToken: null,
-        emailConfirmationTokenExpiry: null,
-      });
-
-      const userWithoutPassword = updatedUser ? (() => {
-        const { password: _, ...rest } = updatedUser;
-        return rest;
-      })() : undefined;
-
-      return {
-        success: true,
-        message: 'Email confirmed successfully! You can now log in.',
-        user: userWithoutPassword,
-      };
+      return { success: true, message: 'Logged out successfully' };
     } catch (error) {
-      console.error('Email confirmation error:', error);
-      return { success: false, message: 'Email confirmation failed' };
+      console.error('Logout error:', error);
+      return { success: false, message: 'Logout failed' };
+    }
+  }
+
+  static async getSession() {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session error:', error);
+        return null;
+      }
+
+      return data.session;
+    } catch (error) {
+      console.error('Session retrieval error:', error);
+      return null;
+    }
+  }
+
+  static async getCurrentUser() {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('User retrieval error:', error);
+        return null;
+      }
+
+      return data.user;
+    } catch (error) {
+      console.error('User retrieval error:', error);
+      return null;
     }
   }
 }

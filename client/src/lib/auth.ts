@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { supabase } from './supabase-client';
-import type { User, Session } from './supabase-client';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthState {
   user: User | null;
@@ -9,113 +8,116 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
 }
 
-export const useAuth = create<AuthState>()(
-  (set, get) => ({
-    user: null,
-    session: null,
-    isAuthenticated: false,
-    isLoading: true,
-    
-    login: async (email: string, password: string) => {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) {
-          return { success: false, error: error.message };
+export const useAuth = create<AuthState>()((set, get) => ({
+  user: null,
+  session: null,
+  isAuthenticated: false,
+  isLoading: true,
+  
+  login: async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        if (error.message.includes('Email not confirmed')) {
+          return { success: false, error: 'Please confirm your email address before logging in' };
         }
-        
-        if (data.user && data.session) {
-          set({ 
-            user: data.user, 
-            session: data.session, 
-            isAuthenticated: true,
-            isLoading: false
-          });
-          return { success: true };
-        }
-        
-        return { success: false, error: 'Login failed' };
-      } catch (error) {
-        console.error('Login error:', error);
-        return { success: false, error: 'Network error' };
+        return { success: false, error: error.message };
       }
-    },
-
-    register: async (email: string, password: string) => {
-      try {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/login`
-          }
-        });
-        
-        if (error) {
-          return { success: false, error: error.message };
-        }
-        
-        if (data.user) {
-          return { success: true };
-        }
-        
-        return { success: false, error: 'Registration failed' };
-      } catch (error) {
-        console.error('Registration error:', error);
-        return { success: false, error: 'Network error' };
+      
+      set({
+        user: data.user,
+        session: data.session,
+        isAuthenticated: true,
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Login failed. Please try again.' };
+    }
+  },
+  
+  register: async (username: string, email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+          },
+        },
+      });
+      
+      if (error) {
+        return { success: false, error: error.message };
       }
-    },
-
-    logout: async () => {
+      
+      if (!data.user?.email_confirmed_at) {
+        return {
+          success: true,
+          error: 'Registration successful! Please check your email to confirm your account before logging in.',
+        };
+      }
+      
+      set({
+        user: data.user,
+        session: data.session,
+        isAuthenticated: !!data.session,
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Registration error:', error);
+      return { success: false, error: 'Registration failed. Please try again.' };
+    }
+  },
+  
+  logout: async () => {
+    try {
       await supabase.auth.signOut();
-      set({ user: null, session: null, isAuthenticated: false });
-    },
-
-    initialize: async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          set({ 
-            user: session.user, 
-            session, 
-            isAuthenticated: true,
-            isLoading: false
-          });
-        } else {
-          set({ isLoading: false });
-        }
-
-        // Listen for auth state changes
-        supabase.auth.onAuthStateChange((event: string, session: any) => {
-          if (session) {
-            set({ 
-              user: session.user, 
-              session, 
-              isAuthenticated: true,
-              isLoading: false
-            });
-          } else {
-            set({ 
-              user: null, 
-              session: null, 
-              isAuthenticated: false,
-              isLoading: false
-            });
-          }
+      set({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  },
+  
+  initialize: async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      
+      set({
+        user: data.session?.user || null,
+        session: data.session,
+        isAuthenticated: !!data.session,
+        isLoading: false,
+      });
+      
+      // Listen for auth changes
+      supabase.auth.onAuthStateChange((event, session) => {
+        set({
+          user: session?.user || null,
+          session,
+          isAuthenticated: !!session,
+          isLoading: false,
         });
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        set({ isLoading: false });
-      }
-    },
-  })
-);
+      });
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      set({ isLoading: false });
+    }
+  },
+}));

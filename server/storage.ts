@@ -1,19 +1,18 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq } from 'drizzle-orm';
-import { users, products, ingredients, type User, type InsertUser, type Product, type InsertProduct, type Ingredient, type InsertIngredient } from "@shared/schema";
+import { profiles, products, ingredients, type Profile, type InsertProfile, type Product, type InsertProduct, type Ingredient, type InsertIngredient } from "@shared/schema";
 
 const connectionString = process.env.DATABASE_URL!;
 const client = postgres(connectionString);
 export const db = drizzle(client);
 
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
+  // Profile methods
+  getProfile(id: string): Promise<Profile | undefined>;
+  getProfileByUsername(username: string): Promise<Profile | undefined>;
+  createProfile(profile: InsertProfile): Promise<Profile>;
+  updateProfile(id: string, updates: Partial<Profile>): Promise<Profile | undefined>;
   
   // Product methods
   getProducts(): Promise<Product[]>;
@@ -31,29 +30,24 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  // Profile methods
+  async getProfile(id: string): Promise<Profile | undefined> {
+    const result = await db.select().from(profiles).where(eq(profiles.id, id)).limit(1);
     return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  async getProfileByUsername(username: string): Promise<Profile | undefined> {
+    const result = await db.select().from(profiles).where(eq(profiles.username, username)).limit(1);
     return result[0];
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  async createProfile(insertProfile: InsertProfile): Promise<Profile> {
+    const result = await db.insert(profiles).values(insertProfile).returning();
     return result[0];
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
-    return result[0];
-  }
-
-  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
-    const result = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+  async updateProfile(id: string, updates: Partial<Profile>): Promise<Profile | undefined> {
+    const result = await db.update(profiles).set(updates).where(eq(profiles.id, id)).returning();
     return result[0];
   }
 
