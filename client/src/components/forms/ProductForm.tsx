@@ -26,38 +26,61 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: product ? {
-      name: product.name,
-      brand: product.brand || undefined,
-      netVolume: product.netVolume || undefined,
-      vintage: product.vintage || undefined,
-      wineType: product.wineType || undefined,
-      sugarContent: product.sugarContent || undefined,
-      appellation: product.appellation || undefined,
-      alcoholContent: product.alcoholContent || undefined,
-      countryOfOrigin: product.countryOfOrigin || undefined,
-      sku: product.sku || undefined,
-      ean: product.ean || undefined,
-      packagingGases: product.packagingGases || undefined,
-      portionSize: product.portionSize || undefined,
-      kcal: product.kcal || undefined,
-      kj: product.kj || undefined,
-      fat: product.fat || undefined,
-      carbohydrates: product.carbohydrates || undefined,
+      name: product.name || '',
+      brand: product.brand || '',
+      netVolume: product.netVolume || '',
+      vintage: product.vintage || '',
+      wineType: product.wineType || '',
+      sugarContent: product.sugarContent || '',
+      appellation: product.appellation || '',
+      alcoholContent: product.alcoholContent || '',
+      countryOfOrigin: product.countryOfOrigin || '',
+      sku: product.sku || '',
+      ean: product.ean || '',
+      packagingGases: product.packagingGases || '',
+      portionSize: product.portionSize || '',
+      kcal: product.kcal || '',
+      kj: product.kj || '',
+      fat: product.fat || '',
+      carbohydrates: product.carbohydrates || '',
       organic: product.organic || false,
       vegetarian: product.vegetarian || false,
       vegan: product.vegan || false,
-      operatorType: product.operatorType || undefined,
-      operatorName: product.operatorName || undefined,
-      operatorAddress: product.operatorAddress || undefined,
-      operatorInfo: product.operatorInfo || undefined,
-      externalLink: product.externalLink || undefined,
-      redirectLink: product.redirectLink || undefined,
-      createdBy: product.createdBy || undefined,
+      operatorType: product.operatorType || '',
+      operatorName: product.operatorName || '',
+      operatorAddress: product.operatorAddress || '',
+      operatorInfo: product.operatorInfo || '',
+      externalLink: product.externalLink || '',
+      redirectLink: product.redirectLink || '',
+      createdBy: product.createdBy || 0,
     } : {
       name: '',
+      brand: '',
+      netVolume: '',
+      vintage: '',
+      wineType: '',
+      sugarContent: '',
+      appellation: '',
+      alcoholContent: '',
+      countryOfOrigin: '',
+      sku: '',
+      ean: '',
+      packagingGases: '',
+      portionSize: '',
+      kcal: '',
+      kj: '',
+      fat: '',
+      carbohydrates: '',
       organic: false,
       vegetarian: false,
       vegan: false,
+      operatorType: '',
+      operatorName: '',
+      operatorAddress: '',
+      operatorInfo: '',
+      externalLink: '',
+      redirectLink: '',
+      createdBy: 0,
     },
   });
 
@@ -92,7 +115,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Margaux Estate" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Margaux Estate" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -105,7 +128,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Net Volume</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 750ml" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 750ml" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -118,7 +141,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>SKU</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. WIN-001" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. WIN-001" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -131,7 +154,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>EAN</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 1234567890123" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 1234567890123" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,7 +178,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Vintage</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 2019" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 2019" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -192,7 +215,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Sugar Content</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Dry, Brut" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Dry, Brut" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -205,7 +228,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Appellation</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Bordeaux AOC" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Bordeaux AOC" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -218,7 +241,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Alcohol Content</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 13.5%" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 13.5%" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -231,7 +254,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Country of Origin</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. France" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. France" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -254,7 +277,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                   <FormItem>
                     <FormLabel>Packaging Gases</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g. Nitrogen, Carbon dioxide" />
+                      <Input {...field} value={field.value || ''} placeholder="e.g. Nitrogen, Carbon dioxide" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -277,7 +300,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Portion Size</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 100ml" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 100ml" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -290,7 +313,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Calories (kcal)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 85" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 85" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -303,7 +326,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Energy (kJ)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 356" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 356" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -316,7 +339,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Fat</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 0g" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 0g" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -329,7 +352,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Carbohydrates</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 2.6g" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 2.6g" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -353,7 +376,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value || false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -370,7 +393,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value || false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -387,7 +410,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value || false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -439,7 +462,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Operator Name</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. Wine Company Ltd." />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. Wine Company Ltd." />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -453,7 +476,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                   <FormItem>
                     <FormLabel>Operator Address</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Full business address..." className="h-20" />
+                      <Textarea {...field} value={field.value || ''} placeholder="Full business address..." className="h-20" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -466,7 +489,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                   <FormItem>
                     <FormLabel>Additional Operator Information</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Additional business information..." className="h-20" />
+                      <Textarea {...field} value={field.value || ''} placeholder="Additional business information..." className="h-20" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -489,7 +512,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>External Link</FormLabel>
                       <FormControl>
-                        <Input {...field} type="url" placeholder="https://example.com/product" />
+                        <Input {...field} value={field.value || ''} type="url" placeholder="https://example.com/product" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -502,7 +525,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Redirect Link</FormLabel>
                       <FormControl>
-                        <Input {...field} type="url" placeholder="https://redirect.com/product" />
+                        <Input {...field} value={field.value || ''} type="url" placeholder="https://redirect.com/product" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

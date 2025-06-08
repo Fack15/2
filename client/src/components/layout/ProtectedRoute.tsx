@@ -1,4 +1,4 @@
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/supabase-auth';
 import { useLocation } from 'wouter';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';

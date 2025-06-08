@@ -2,15 +2,15 @@ import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "dri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
-  isEmailConfirmed: boolean("is_email_confirmed").default(false).notNull(),
-  emailConfirmationToken: varchar("email_confirmation_token", { length: 255 }),
-  emailConfirmationTokenExpiry: timestamp("email_confirmation_token_expiry"),
+// Use Supabase auth.users table instead of custom users table
+// This references the built-in Supabase auth system
+export const profiles = pgTable("profiles", {
+  id: varchar("id").primaryKey(), // References auth.users.id
+  username: varchar("username", { length: 50 }).unique(),
+  firstName: varchar("first_name", { length: 50 }),
+  lastName: varchar("last_name", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const products = pgTable("products", {
@@ -44,7 +44,7 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  createdBy: integer("created_by"),
+  createdBy: varchar("created_by").notNull().references(() => profiles.id),
 });
 
 export const ingredients = pgTable("ingredients", {
@@ -56,13 +56,13 @@ export const ingredients = pgTable("ingredients", {
   details: text("details"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  createdBy: integer("created_by"),
+  createdBy: varchar("created_by").notNull().references(() => profiles.id),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  email: true,
-  password: true,
+export const insertProfileSchema = createInsertSchema(profiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const loginSchema = z.object({
@@ -84,16 +84,45 @@ export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+}).extend({
+  brand: z.string().optional().or(z.literal('')),
+  netVolume: z.string().optional().or(z.literal('')),
+  vintage: z.string().optional().or(z.literal('')),
+  wineType: z.string().optional().or(z.literal('')),
+  sugarContent: z.string().optional().or(z.literal('')),
+  appellation: z.string().optional().or(z.literal('')),
+  alcoholContent: z.string().optional().or(z.literal('')),
+  packagingGases: z.string().optional().or(z.literal('')),
+  portionSize: z.string().optional().or(z.literal('')),
+  kcal: z.string().optional().or(z.literal('')),
+  kj: z.string().optional().or(z.literal('')),
+  fat: z.string().optional().or(z.literal('')),
+  carbohydrates: z.string().optional().or(z.literal('')),
+  operatorType: z.string().optional().or(z.literal('')),
+  operatorName: z.string().optional().or(z.literal('')),
+  operatorAddress: z.string().optional().or(z.literal('')),
+  operatorInfo: z.string().optional().or(z.literal('')),
+  countryOfOrigin: z.string().optional().or(z.literal('')),
+  sku: z.string().optional().or(z.literal('')),
+  ean: z.string().optional().or(z.literal('')),
+  externalLink: z.string().optional().or(z.literal('')),
+  redirectLink: z.string().optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')),
+  organic: z.boolean().default(false),
+  vegetarian: z.boolean().default(false),
+  vegan: z.boolean().default(false),
 });
 
 export const insertIngredientSchema = createInsertSchema(ingredients).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+export type Profile = typeof profiles.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertIngredient = z.infer<typeof insertIngredientSchema>;

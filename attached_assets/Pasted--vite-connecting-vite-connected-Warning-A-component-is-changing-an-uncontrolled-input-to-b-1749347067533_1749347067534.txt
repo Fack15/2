@@ -1,0 +1,65 @@
+[vite] connecting...
+[vite] connected.
+Warning: A component is changing an uncontrolled input to be controlled. This is likely caused by the value changing from undefined to a defined value, which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component. More info: https://reactjs.org/link/controlled-components
+    at input
+    at _c (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/input.tsx:20:11)
+    at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GR3B7I3S.js?v=e96f6b9a:79:13
+    at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GR3B7I3S.js?v=e96f6b9a:56:13
+    at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/form.tsx:130:9
+    at div
+    at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/form.tsx:72:6
+    at Controller (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YGCRICWC.js?v=e96f6b9a:298:35)
+    at FormField (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/form.tsx:33:6)
+    at div
+    at div
+    at _c9 (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/card.tsx:20:11)
+    at form
+    at FormProvider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YGCRICWC.js?v=e96f6b9a:102:11)
+    at div
+    at ProductForm (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/forms/ProductForm.tsx:30:39)
+    at div
+    at CreateProductPage (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/pages/CreateProductPage.tsx:25:27)
+    at ProtectedRoute (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/layout/ProtectedRoute.tsx:22:42)
+    at Route (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e96f6b9a:323:16)
+    at Switch (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e96f6b9a:379:17)
+    at Router
+    at div
+    at Provider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OMOYXI53.js?v=e96f6b9a:38:15)
+    at TooltipProvider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=e96f6b9a:59:5)
+    at QueryClientProvider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=e96f6b9a:2805:3)
+    at App (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/App.tsx?v=ka1g9oi6BrQPhm92KIC4J:160:26)
+at input
+at _c (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/input.tsx:20:11)
+at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GR3B7I3S.js?v=e96f6b9a:79:13
+at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GR3B7I3S.js?v=e96f6b9a:56:13
+at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/form.tsx:130:9
+at div
+at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/form.tsx:72:6
+at Controller (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YGCRICWC.js?v=e96f6b9a:298:35)
+at FormField (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/form.tsx:33:6)
+at div
+at div
+at _c9 (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/card.tsx:114:12)
+at div
+at _c (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/ui/card.tsx:20:11)
+at form
+at FormProvider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YGCRICWC.js?v=e96f6b9a:102:11)
+at div
+at ProductForm (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/forms/ProductForm.tsx:30:39)
+at div
+at CreateProductPage (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/pages/CreateProductPage.tsx:25:27)
+at ProtectedRoute (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/components/layout/ProtectedRoute.tsx:22:42)
+at Route (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e96f6b9a:323:16)
+at Switch (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e96f6b9a:379:17)
+at Router
+at div
+at Provider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OMOYXI53.js?v=e96f6b9a:38:15)
+at TooltipProvider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=e96f6b9a:59:5)
+at QueryClientProvider (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=e96f6b9a:2805:3)
+at App (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/src/App.tsx?v=ka1g9oi6BrQPhm92KIC4J:160:26)
+at t.value (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://c39e6eb2-0011-4c2f-b3df-6084b3fb931c-00-3hvrk4lgop119.spock.repl.co/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

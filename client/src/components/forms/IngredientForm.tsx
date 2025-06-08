@@ -32,7 +32,7 @@ export default function IngredientForm({ ingredient, onSubmit, onCancel, isLoadi
   const form = useForm<IngredientFormData>({
     resolver: zodResolver(ingredientFormSchema),
     defaultValues: ingredient ? {
-      name: ingredient.name,
+      name: ingredient.name || '',
       category: ingredient.category || '',
       eNumber: ingredient.eNumber || '',
       details: ingredient.details || '',

@@ -13,6 +13,29 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import * as XLSX from "xlsx";
+import { supabase } from '@shared/supabase';
+
+// Authentication middleware
+async function requireAuth(req: any, res: any, next: any) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+}
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -167,9 +190,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products routes
-  app.get("/api/products", async (req, res) => {
+  app.get("/api/products", requireAuth, async (req: any, res) => {
     try {
-      const products = await storage.getProducts();
+      const products = await storage.getProducts(req.user.id);
       res.json(products);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch products" });
@@ -177,10 +200,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export route must come before /:id route
-  app.get("/api/products/export", async (req, res) => {
+  app.get("/api/products/export", requireAuth, async (req: any, res) => {
     try {
       console.log("Starting products export...");
-      const products = await storage.getProducts();
+      const products = await storage.getProducts(req.user.id);
       console.log(`Found ${products.length} products to export`);
       
       // Transform products for Excel export - specific fields only
@@ -213,10 +236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/products/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await storage.getProduct(id, req.user.id);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
@@ -226,21 +249,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
-      const product = await storage.createProduct(validatedData);
+      const product = await storage.createProduct(validatedData, req.user.id);
       res.status(201).json(product);
     } catch (error) {
       res.status(400).json({ error: "Invalid product data", details: error });
     }
   });
 
-  app.put("/api/products/:id", async (req, res) => {
+  app.put("/api/products/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertProductSchema.partial().parse(req.body);
-      const product = await storage.updateProduct(id, validatedData);
+      const product = await storage.updateProduct(id, validatedData, req.user.id);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
@@ -250,10 +273,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteProduct(id);
+      const success = await storage.deleteProduct(id, req.user.id);
       if (!success) {
         return res.status(404).json({ error: "Product not found" });
       }
@@ -264,10 +287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload routes
-  app.post("/api/products/:id/image", upload.single('image'), async (req, res) => {
+  app.post("/api/products/:id/image", requireAuth, upload.single('image'), async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await storage.getProduct(id, req.user.id);
       
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
@@ -280,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = `/uploads/${req.file.filename}`;
       
       // Update product with new image URL
-      const updatedProduct = await storage.updateProduct(id, { imageUrl });
+      const updatedProduct = await storage.updateProduct(id, { imageUrl }, req.user.id);
       
       if (!updatedProduct) {
         return res.status(500).json({ error: "Failed to update product" });
@@ -293,10 +316,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id/image", async (req, res) => {
+  app.delete("/api/products/:id/image", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await storage.getProduct(id, req.user.id);
       
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
@@ -311,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Remove image URL from product
-      const updatedProduct = await storage.updateProduct(id, { imageUrl: null });
+      const updatedProduct = await storage.updateProduct(id, { imageUrl: undefined }, req.user.id);
       
       if (!updatedProduct) {
         return res.status(500).json({ error: "Failed to update product" });
@@ -325,9 +348,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ingredients routes
-  app.get("/api/ingredients", async (req, res) => {
+  app.get("/api/ingredients", requireAuth, async (req: any, res) => {
     try {
-      const ingredients = await storage.getIngredients();
+      const ingredients = await storage.getIngredients(req.user.id);
       res.json(ingredients);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch ingredients" });
@@ -335,10 +358,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export route must come before the parameterized route
-  app.get("/api/ingredients/export", async (req, res) => {
+  app.get("/api/ingredients/export", requireAuth, async (req: any, res) => {
     try {
       console.log("Starting ingredients export...");
-      const ingredients = await storage.getIngredients();
+      const ingredients = await storage.getIngredients(req.user.id);
       console.log(`Found ${ingredients.length} ingredients to export`);
       
       // Transform ingredients for Excel export
@@ -370,10 +393,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/ingredients/:id", async (req, res) => {
+  app.get("/api/ingredients/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const ingredient = await storage.getIngredient(id);
+      const ingredient = await storage.getIngredient(id, req.user.id);
       if (!ingredient) {
         return res.status(404).json({ error: "Ingredient not found" });
       }
@@ -383,10 +406,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ingredients", async (req, res) => {
+  app.post("/api/ingredients", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertIngredientSchema.parse(req.body);
-      const ingredient = await storage.createIngredient(validatedData);
+      const ingredient = await storage.createIngredient(validatedData, req.user.id);
       res.status(201).json(ingredient);
     } catch (error) {
       res
@@ -395,11 +418,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/ingredients/:id", async (req, res) => {
+  app.put("/api/ingredients/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertIngredientSchema.partial().parse(req.body);
-      const ingredient = await storage.updateIngredient(id, validatedData);
+      const ingredient = await storage.updateIngredient(id, validatedData, req.user.id);
       if (!ingredient) {
         return res.status(404).json({ error: "Ingredient not found" });
       }
@@ -411,10 +434,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/ingredients/:id", async (req, res) => {
+  app.delete("/api/ingredients/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteIngredient(id);
+      const success = await storage.deleteIngredient(id, req.user.id);
       if (!success) {
         return res.status(404).json({ error: "Ingredient not found" });
       }
@@ -425,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Excel Import/Export routes for Products
-  app.post("/api/products/import", uploadExcel.single('file'), async (req, res) => {
+  app.post("/api/products/import", requireAuth, uploadExcel.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -466,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          const product = await storage.createProduct(result.data);
+          const product = await storage.createProduct(result.data, req.user.id);
           importedProducts.push(product);
         } catch (error) {
           errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -488,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Excel Import/Export routes for Ingredients
-  app.post("/api/ingredients/import", uploadExcel.single('file'), async (req, res) => {
+  app.post("/api/ingredients/import", requireAuth, uploadExcel.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -529,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          const ingredient = await storage.createIngredient(result.data);
+          const ingredient = await storage.createIngredient(result.data, req.user.id);
           importedIngredients.push(ingredient);
         } catch (error) {
           errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
