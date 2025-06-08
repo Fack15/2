@@ -8,7 +8,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
 }
@@ -27,9 +27,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
       });
       
       if (error) {
-        if (error.message.includes('Email not confirmed')) {
-          return { success: false, error: 'Please confirm your email address before logging in' };
-        }
+        console.error('Login error:', error);
         return { success: false, error: error.message };
       }
       
@@ -46,27 +44,22 @@ export const useAuth = create<AuthState>()((set, get) => ({
     }
   },
   
-  register: async (username: string, email: string, password: string) => {
+  register: async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            username,
-          },
-        },
       });
       
       if (error) {
-        console.error('Supabase registration error:', error);
+        console.error('Registration error:', error);
         return { success: false, error: error.message };
       }
       
-      if (!data.user?.email_confirmed_at) {
+      if (data.user && !data.user.email_confirmed_at) {
         return {
           success: true,
-          error: 'Registration successful! Please check your email to confirm your account before logging in.',
+          error: 'Registration successful! Please check your email to confirm your account.',
         };
       }
       
