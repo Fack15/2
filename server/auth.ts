@@ -1,11 +1,5 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
-import nodemailer from 'nodemailer';
-import { storage, db } from './storage';
-import { users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-import type { User } from '@shared/schema';
+import { supabase } from '@shared/supabase';
+import type { Profile } from '@shared/schema';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const EMAIL_USER = process.env.EMAIL_USER;
@@ -58,16 +52,27 @@ export class AuthService {
     console.log(`Confirmation link: ${BASE_URL}/api/auth/confirm-email?token=${token}`);
     console.log(`Username: ${username}`);
     
-    // For development/testing, automatically confirm the email after a short delay
-    // In production, this would be replaced with actual email sending
-    setTimeout(async () => {
+    // In a production environment, you would send an actual email here
+    // For now, users need to manually visit the confirmation link
+    if (EMAIL_USER && EMAIL_PASS) {
       try {
-        console.log('Auto-confirming email for testing purposes...');
-        await AuthService.confirmEmail(token);
+        await transporter.sendMail({
+          from: EMAIL_USER,
+          to: email,
+          subject: 'Confirm Your Email Address',
+          html: `
+            <h2>Welcome, ${username}!</h2>
+            <p>Please click the link below to confirm your email address:</p>
+            <a href="${BASE_URL}/api/auth/confirm-email?token=${token}">Confirm Email</a>
+            <p>This link will expire in 24 hours.</p>
+          `,
+        });
+        console.log('Confirmation email sent successfully');
       } catch (error) {
-        console.error('Auto-confirm error:', error);
+        console.error('Failed to send confirmation email:', error);
+        throw new Error('Failed to send confirmation email');
       }
-    }, 2000); // Auto-confirm after 2 seconds for testing
+    }
   }
 
   static async register(username: string, email: string, password: string): Promise<AuthResponse> {

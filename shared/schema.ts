@@ -2,15 +2,15 @@ import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "dri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
-  isEmailConfirmed: boolean("is_email_confirmed").default(false).notNull(),
-  emailConfirmationToken: varchar("email_confirmation_token", { length: 255 }),
-  emailConfirmationTokenExpiry: timestamp("email_confirmation_token_expiry"),
+// Use Supabase auth.users table instead of custom users table
+// This references the built-in Supabase auth system
+export const profiles = pgTable("profiles", {
+  id: varchar("id").primaryKey(), // References auth.users.id
+  username: varchar("username", { length: 50 }).unique(),
+  firstName: varchar("first_name", { length: 50 }),
+  lastName: varchar("last_name", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const products = pgTable("products", {
@@ -59,10 +59,10 @@ export const ingredients = pgTable("ingredients", {
   createdBy: integer("created_by"),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  email: true,
-  password: true,
+export const insertProfileSchema = createInsertSchema(profiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const loginSchema = z.object({
@@ -92,8 +92,8 @@ export const insertIngredientSchema = createInsertSchema(ingredients).omit({
   updatedAt: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+export type Profile = typeof profiles.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertIngredient = z.infer<typeof insertIngredientSchema>;
