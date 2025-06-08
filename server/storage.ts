@@ -15,18 +15,18 @@ export interface IStorage {
   updateProfile(id: string, updates: Partial<Profile>): Promise<Profile | undefined>;
   
   // Product methods
-  getProducts(): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
+  getProducts(userId: string): Promise<Product[]>;
+  getProduct(id: number, userId: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
-  updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
-  deleteProduct(id: number): Promise<boolean>;
+  updateProduct(id: number, product: Partial<InsertProduct>, userId: string): Promise<Product | undefined>;
+  deleteProduct(id: number, userId: string): Promise<boolean>;
   
   // Ingredient methods
-  getIngredients(): Promise<Ingredient[]>;
-  getIngredient(id: number): Promise<Ingredient | undefined>;
+  getIngredients(userId: string): Promise<Ingredient[]>;
+  getIngredient(id: number, userId: string): Promise<Ingredient | undefined>;
   createIngredient(ingredient: InsertIngredient): Promise<Ingredient>;
-  updateIngredient(id: number, ingredient: Partial<InsertIngredient>): Promise<Ingredient | undefined>;
-  deleteIngredient(id: number): Promise<boolean>;
+  updateIngredient(id: number, ingredient: Partial<InsertIngredient>, userId: string): Promise<Ingredient | undefined>;
+  deleteIngredient(id: number, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -52,12 +52,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product methods
-  async getProducts(): Promise<Product[]> {
-    return await db.select().from(products).orderBy(products.name);
+  async getProducts(userId: string): Promise<Product[]> {
+    return await db.select().from(products).where(eq(products.createdBy, userId)).orderBy(products.name);
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
-    const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  async getProduct(id: number, userId: string): Promise<Product | undefined> {
+    const result = await db.select().from(products).where(and(eq(products.id, id), eq(products.createdBy, userId))).limit(1);
     return result[0];
   }
 

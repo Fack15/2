@@ -44,7 +44,7 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  createdBy: integer("created_by"),
+  createdBy: varchar("created_by").notNull().references(() => profiles.id),
 });
 
 export const ingredients = pgTable("ingredients", {
@@ -56,7 +56,7 @@ export const ingredients = pgTable("ingredients", {
   details: text("details"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  createdBy: integer("created_by"),
+  createdBy: varchar("created_by").notNull().references(() => profiles.id),
 });
 
 export const insertProfileSchema = createInsertSchema(profiles).omit({
@@ -111,13 +111,15 @@ export const insertProductSchema = createInsertSchema(products).omit({
   organic: z.boolean().default(false),
   vegetarian: z.boolean().default(false),
   vegan: z.boolean().default(false),
-  createdBy: z.number().optional().default(0),
+  createdBy: z.string().optional(),
 });
 
 export const insertIngredientSchema = createInsertSchema(ingredients).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  createdBy: z.string().optional(),
 });
 
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
