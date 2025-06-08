@@ -24,7 +24,7 @@ export interface IStorage {
   // Ingredient methods
   getIngredients(userId: string): Promise<Ingredient[]>;
   getIngredient(id: number, userId: string): Promise<Ingredient | undefined>;
-  createIngredient(ingredient: InsertIngredient): Promise<Ingredient>;
+  createIngredient(ingredient: InsertIngredient, userId: string): Promise<Ingredient>;
   updateIngredient(id: number, ingredient: Partial<InsertIngredient>, userId: string): Promise<Ingredient | undefined>;
   deleteIngredient(id: number, userId: string): Promise<boolean>;
 }
@@ -87,8 +87,9 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async createIngredient(ingredient: InsertIngredient): Promise<Ingredient> {
-    const result = await db.insert(ingredients).values(ingredient).returning();
+  async createIngredient(ingredient: InsertIngredient, userId: string): Promise<Ingredient> {
+    const ingredientWithUser = { ...ingredient, createdBy: userId };
+    const result = await db.insert(ingredients).values(ingredientWithUser).returning();
     return result[0];
   }
 

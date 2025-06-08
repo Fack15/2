@@ -13,6 +13,29 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import * as XLSX from "xlsx";
+import { supabase } from '@shared/supabase';
+
+// Authentication middleware
+async function requireAuth(req: any, res: any, next: any) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+}
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -167,9 +190,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products routes
-  app.get("/api/products", async (req, res) => {
+  app.get("/api/products", requireAuth, async (req: any, res) => {
     try {
-      const products = await storage.getProducts();
+      const products = await storage.getProducts(req.user.id);
       res.json(products);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch products" });
@@ -177,10 +200,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export route must come before /:id route
-  app.get("/api/products/export", async (req, res) => {
+  app.get("/api/products/export", requireAuth, async (req: any, res) => {
     try {
       console.log("Starting products export...");
-      const products = await storage.getProducts();
+      const products = await storage.getProducts(req.user.id);
       console.log(`Found ${products.length} products to export`);
       
       // Transform products for Excel export - specific fields only
@@ -213,10 +236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/products/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await storage.getProduct(id, req.user.id);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
