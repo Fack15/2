@@ -84,6 +84,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
 }).extend({
   brand: z.string().optional().or(z.literal('')),
   netVolume: z.string().optional().or(z.literal('')),
@@ -111,15 +112,13 @@ export const insertProductSchema = createInsertSchema(products).omit({
   organic: z.boolean().default(false),
   vegetarian: z.boolean().default(false),
   vegan: z.boolean().default(false),
-  createdBy: z.string().optional(),
 });
 
 export const insertIngredientSchema = createInsertSchema(ingredients).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
-  createdBy: z.string().optional(),
+  createdBy: true,
 });
 
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
