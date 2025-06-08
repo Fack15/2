@@ -273,10 +273,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteProduct(id);
+      const success = await storage.deleteProduct(id, req.user.id);
       if (!success) {
         return res.status(404).json({ error: "Product not found" });
       }
@@ -287,10 +287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload routes
-  app.post("/api/products/:id/image", upload.single('image'), async (req, res) => {
+  app.post("/api/products/:id/image", requireAuth, upload.single('image'), async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await storage.getProduct(id, req.user.id);
       
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
@@ -303,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = `/uploads/${req.file.filename}`;
       
       // Update product with new image URL
-      const updatedProduct = await storage.updateProduct(id, { imageUrl });
+      const updatedProduct = await storage.updateProduct(id, { imageUrl }, req.user.id);
       
       if (!updatedProduct) {
         return res.status(500).json({ error: "Failed to update product" });
@@ -316,10 +316,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id/image", async (req, res) => {
+  app.delete("/api/products/:id/image", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await storage.getProduct(id, req.user.id);
       
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
@@ -334,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Remove image URL from product
-      const updatedProduct = await storage.updateProduct(id, { imageUrl: null });
+      const updatedProduct = await storage.updateProduct(id, { imageUrl: undefined }, req.user.id);
       
       if (!updatedProduct) {
         return res.status(500).json({ error: "Failed to update product" });
@@ -448,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Excel Import/Export routes for Products
-  app.post("/api/products/import", uploadExcel.single('file'), async (req, res) => {
+  app.post("/api/products/import", requireAuth, uploadExcel.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          const product = await storage.createProduct(result.data);
+          const product = await storage.createProduct(result.data, req.user.id);
           importedProducts.push(product);
         } catch (error) {
           errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -511,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Excel Import/Export routes for Ingredients
-  app.post("/api/ingredients/import", uploadExcel.single('file'), async (req, res) => {
+  app.post("/api/ingredients/import", requireAuth, uploadExcel.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -552,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          const ingredient = await storage.createIngredient(result.data);
+          const ingredient = await storage.createIngredient(result.data, req.user.id);
           importedIngredients.push(ingredient);
         } catch (error) {
           errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
