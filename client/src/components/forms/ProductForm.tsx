@@ -300,7 +300,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Portion Size</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 100ml" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 100ml" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -313,7 +313,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Calories (kcal)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 85" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 85" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -326,7 +326,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Energy (kJ)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 356" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 356" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -339,7 +339,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Fat</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 0g" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 0g" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -352,7 +352,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem>
                       <FormLabel>Carbohydrates</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 2.6g" />
+                        <Input {...field} value={field.value || ''} placeholder="e.g. 2.6g" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -376,7 +376,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value || false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -393,7 +393,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value || false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -410,7 +410,7 @@ export default function ProductForm({ product, onSubmit, onCancel, isLoading = f
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value || false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
